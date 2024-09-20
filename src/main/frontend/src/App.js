@@ -1,16 +1,16 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 
 function App() {
   const [message, setMessage] = useState('');
 
-  useEffect (() => {
+  useEffect(() => {
     const fetchMessage = async () => {
-      const response = await fetch ('/hello/personalized' , {
+      const response = await fetch('/hello/personalized', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ firstName: "Ensign", lastName: "Student"})
+        body: JSON.stringify({ firstName: 'Ensign', lastName: 'Student' }),
       });
       const text = await response.text();
       setMessage(text);
@@ -18,12 +18,11 @@ function App() {
     fetchMessage();
   }, []);
 
-  return(
+  return (
       <div>
-          <p>{message}</p>
+        <p>{message}</p>
       </div>
   );
-
 }
 
 export default App;
