@@ -8,9 +8,32 @@ import java.util.List;
 import org.acme.UserName;
 
 //This defines the path of the resource
-@Path("/users")
+@Path("/hello")
 public class GreetingResource {
 
+    @GET// this is a GET HTTP request
+    @Produces(MediaType.TEXT_PLAIN)
+    public String hello() {
+        return "Hello RESTEasy";
+    }
+
+    @Path("/personalized/{name}")
+    @POST// this is a GET HTTP request
+    @Produces(MediaType.TEXT_PLAIN)
+    @Transactional
+    public String personalizedHello(@PathParam("name") String name) {
+        UserName userName = new UserName(name);
+        userName.persist();
+        return "Hello " + name + "! Your name has been stored in the database. ";
+    }
+
+    @POST// this is a GET HTTP request
+    @Path("/personalized")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.TEXT_PLAIN)
+    public String personalizedHelloPost(Person p) {
+        return "Hello " + p.getFirstName() + " " + p.getLastName();
+    }
 
     //CREATE: Add a new user
     @POST

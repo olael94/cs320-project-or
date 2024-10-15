@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import './App.css';  // Import the CSS
+import { useNavigate } from 'react-router-dom';
 
 function App() {
   // Define state variable 'message' to hold the response from the server, and 'setMessage' to update it.
@@ -8,6 +9,8 @@ function App() {
   // Define state variables for 'firstName' and 'lastName' to capture user input.
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  // React Router hook that allows you to navigate between different pages (routes) in your app
+  const navigate = useNavigate();
 
   /* This function handles the form submission. It will make
   an API POST request with the firstName and lastName to the server. */
@@ -27,6 +30,10 @@ function App() {
     // Set the 'message' state to display the response text in the UI.
     setMessage(text);
   };
+
+  const navigateToPage2 = () => {
+    navigate('/page2');
+  }
 
   return (
       <div className="app-container">
@@ -52,6 +59,7 @@ function App() {
           </div>
           {/* Button to submit the form and trigger the handleSubmit function */}
           <button onClick={handleSubmit}>Submit</button>
+          <button onClick={navigateToPage2}>Page 2</button>
         </div>
         <p>{message}</p>
       </div>
