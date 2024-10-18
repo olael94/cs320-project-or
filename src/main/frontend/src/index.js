@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
 import Page2 from './Page2';
+import Navbar from './Navbar';
 import {BrowserRouter, Routes, Route} from 'react-router-dom';
 import reportWebVitals from './reportWebVitals';
 
@@ -14,7 +15,7 @@ root.render(
   <React.StrictMode>
       {/*Enables the app to have different routes (pages), so users can navigate them*/}
     <BrowserRouter>
-        {/*Contains the routes (pages) the application will have*/}
+        <Navbar />
       <Routes>
         <Route path="/" element={<App />} />
         <Route path="/page2" element={<Page2 />} />

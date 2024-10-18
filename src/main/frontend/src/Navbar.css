@@ -1,0 +1,90 @@
+nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    background-color: #333;
+    color: white;
+}
+
+.logo a {
+    color: white;
+    text-decoration: none;
+    font-size: 24px;
+}
+
+.logo-img {
+    width: 30px; /* Adjust size as needed */
+    height: auto; /* Maintain aspect ratio */
+}
+
+.menu{
+    flex-grow: 1; /* Allows the menu to expand and take available space */
+    text-align: center; /* Centers the links */
+}
+
+.menu ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    display: inline-flex; /* Keeps the links inline and centered */
+}
+
+.menu ul li {
+    margin-right: 20px;
+}
+
+.menu ul li a {
+    color: white;
+    text-decoration: none;
+    font-size: 18px;
+}
+
+/* MobileMenu icon */
+.mobileMenu {
+    display: none;
+    flex-direction: column;
+    cursor: pointer;
+}
+
+.mobileMenu span {
+    width: 25px;
+    height: 3px;
+    background-color: white;
+    margin: 4px;
+    transition: all 0.3s;
+}
+
+/* Mobile styles */
+@media (max-width: 768px) {
+    /* Hide the regular menu on small screens */
+    .menu {
+        display: none;
+        flex-direction: column;
+        position: absolute;
+        top: 60px;
+        right: 0;
+        background-color: #333;
+        width: 100%;
+        text-align: left; /* Aligns the whole menu to the left */
+    }
+
+    /* When the menu is open, display it */
+    .menu.open {
+        display: flex;
+    }
+
+    .menu ul {
+        flex-direction: column;
+    }
+
+    .menu ul li {
+        margin: 10px 0;
+        padding-left: 20px;
+    }
+
+    /* Display hamburger menu icon on small screens */
+    .mobileMenu {
+        display: flex;
+    }
+}
