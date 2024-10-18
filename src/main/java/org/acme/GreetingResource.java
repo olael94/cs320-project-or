@@ -3,6 +3,7 @@ package org.acme;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
+
 import java.util.List;
 
 import org.acme.UserName;
@@ -86,7 +87,7 @@ public class GreetingResource {
         private String firstName;
         private String lastName;
 
-        public String getFirstName(){
+        public String getFirstName() {
             return firstName;
         }
 
@@ -94,7 +95,7 @@ public class GreetingResource {
             this.firstName = firstName;
         }
 
-        public String getLastName(){
+        public String getLastName() {
             return lastName;
         }
 
