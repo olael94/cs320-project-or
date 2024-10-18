@@ -40,6 +40,14 @@ nav {
     font-size: 18px;
 }
 
+.menu ul li a:hover {
+    color: #ffcc00; /* Change color on hover */
+}
+
+.menu ul li a.active {
+    color: #ffcc00; /* Change color for active link */
+}
+
 /* MobileMenu icon */
 .mobileMenu {
     display: none;
@@ -53,6 +61,19 @@ nav {
     background-color: white;
     margin: 4px;
     transition: all 0.3s;
+}
+
+/* New styles for the open state of the mobile menu */
+.mobileMenu.open span:nth-child(1) {
+    transform: rotate(45deg) translate(5px, 11px); /* Rotate top bar */
+}
+
+.mobileMenu.open span:nth-child(2) {
+    opacity: 0; /* Hide the middle bar */
+}
+
+.mobileMenu.open span:nth-child(3) {
+    transform: rotate(-45deg) translate(5px, -11px); /* Rotate bottom bar */
 }
 
 /* Mobile styles */
