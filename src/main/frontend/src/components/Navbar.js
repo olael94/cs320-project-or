@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {Link} from 'react-router-dom';
+import {NavLink} from 'react-router-dom';
 import './Navbar.css';
 import logo from '../assets/images/logo512.png';
 
@@ -14,24 +14,25 @@ const Navbar = () => {
     return (
         <nav>
             <div className="logo">
-                <Link to="/">
+                <NavLink to="/">
                     <img src={logo} alt="MyApp Logo" className="logo-img"/>
-                </Link>
+                </NavLink>
             </div>
             <div className={`menu ${isOpen ? 'open' : ''}`}>
                 <ul>
                     <li>
-                        <Link to="/">Home</Link>
+                        <NavLink exact to="/" activeClassName="active">Home</NavLink>
                     </li>
                     <li>
-                        <Link to="/products">Products</Link>
+                        <NavLink to="/products" activeClassName="active">Products</NavLink>
                     </li>
                     <li>
-                        <Link to="/cart">Cart</Link>
+                        <NavLink to="/cart" activeClassName="active">Cart</NavLink>
                     </li>
                 </ul>
             </div>
-            <div className="mobileMenu" onClick={toggleMenu}>
+            {/* Mobile menu icon state for Hamburger animation */}
+            <div className={`mobileMenu ${isOpen ? 'open' : ''}`} onClick={toggleMenu}>
                 <span></span>
                 <span></span>
                 <span></span>
