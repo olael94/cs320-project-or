@@ -9,9 +9,10 @@ import jakarta.persistence.Table;
 public class UserName extends PanacheEntity {
     public String name;
 
-    public UserName() {}
+    public UserName() {
+    }
 
-    public UserName (String name) {
+    public UserName(String name) {
         this.name = name;
     }
 

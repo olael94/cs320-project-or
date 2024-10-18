@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, {useState} from 'react';
+import {Link} from 'react-router-dom';
 import './Navbar.css';
-import logo from './assets/images/Random.png';
+import logo from '../assets/images/logo512.png';
 
 const Navbar = () => {
     // State variable to keep track of whether the mobile menu is open or closed
@@ -24,7 +24,10 @@ const Navbar = () => {
                         <Link to="/">Home</Link>
                     </li>
                     <li>
-                        <Link to="/page2">Page2</Link>
+                        <Link to="/products">Products</Link>
+                    </li>
+                    <li>
+                        <Link to="/cart">Cart</Link>
                     </li>
                 </ul>
             </div>
