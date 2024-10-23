@@ -1,7 +1,5 @@
 /* Center the content */
-.app-container {
-    text-align: center;
-    margin-top: 100px;
+.HomePage-container {
 }
 
 h1 {
@@ -16,6 +14,7 @@ h1 {
     flex-direction: column; /* Stack the input groups vertically */
     align-items: center;
     text-align: left;
+    padding-top: 100px;
 }
 
 .input-group {
@@ -38,9 +37,9 @@ input {
     border-radius: 5px; /* Adjust input box radius */
     border: 1px solid #ccc;
 }
-
+/*
 button {
-    padding: 10px 20px; /*Size of Button*/
+    padding: 10px 20px;
     margin-top: 10px;
     background-color: #0abab5;
     color: white;
@@ -48,6 +47,7 @@ button {
     border-radius: 5px;
     cursor: pointer;
 }
+*/
 
 button:hover {
     background-color: #45a049;
