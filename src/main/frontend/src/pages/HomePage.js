@@ -2,6 +2,13 @@ import React, {useEffect, useState} from 'react';
 import '../styles/HomePage.css';  // Import the CSS
 import {useNavigate} from 'react-router-dom';
 
+//Imports for slider
+import FeaturedSlider from "../components/FeaturedSlider/FeaturedSlider";
+import 'slick-carousel/slick/slick.css';
+import 'slick-carousel/slick/slick-theme.css';
+
+
+
 function HomePage() {
     // Define state variable 'message' to hold the response from the server, and 'setMessage' to update it.
     const [message, setMessage] = useState('');
@@ -10,8 +17,7 @@ function HomePage() {
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
 
-    /* This function handles the form submission. It will make
-    an API POST request with the firstName and lastName to the server. */
+    /* This function handles the form submission. It will make an API POST request with the firstName and lastName to the server. */
     const handleSubmit = async () => {
         // Send a POST request to the '/hello/personalized' endpoint.
         const response = await fetch('/hello/personalized', {
@@ -30,8 +36,8 @@ function HomePage() {
     };
 
     return (
-        <div className="app-container">
-            <h1>Personalized Greeting</h1>
+        <div className="HomePage-container">
+            <FeaturedSlider />
             <div className="input-container">
                 <div className="input-group">
                     <label>First Name:</label>
@@ -53,7 +59,6 @@ function HomePage() {
                 </div>
                 {/* Button to submit the form and trigger the handleSubmit function */}
                 <button onClick={handleSubmit}>Submit</button>
-                {/*<button onClick={navigateToPage2}>Page 2</button>*/}
             </div>
             <p>{message}</p>
         </div>
