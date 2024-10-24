@@ -9,13 +9,15 @@ import jakarta.persistence.Table;
 public class UserName extends PanacheEntity {
     public String name;
 
+    // Getter for the name field
     public UserName() {
     }
-
+    // Setter for the name field
     public UserName(String name) {
         this.name = name;
     }
 
+    // The toString method is used to convert the object to a string representation.
     @Override
     public String toString() {
         return name;
