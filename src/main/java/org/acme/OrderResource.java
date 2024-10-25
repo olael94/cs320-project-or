@@ -43,8 +43,8 @@ public class OrderResource {
 
         // Return the tracking ID for guest orders or the order ID for users
         String trackingInfo = order.user == null
-                ? "Your order tracking number is " + order.guestTrackingId
-                : "Your order reference number is " + order.id;
+                ? "Your order guest tracking number is " + order.guestTrackingId
+                : "Your order tracking number is " + order.id;
 
         logger.info("Order created successfully with tracking info: {}", trackingInfo);
 

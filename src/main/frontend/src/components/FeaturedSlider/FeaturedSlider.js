@@ -40,8 +40,8 @@ const FeaturedSlider = () => {
             <Slider {...settings}>
                 {products.map((product) => (
                     <div key={product.id} className="featured-product">
-                        <img src={product.image} alt={product.name} className="product-image"/>
-                        <h2 className="product-name">{product.name}</h2>
+                        <img src={product.image} alt={product.name} className="product-image-slider"/>
+                        <h2 className="product-name-slider">{product.name}</h2>
                         <button className="shop-now-button" onClick={() => handleButtonClick(product.link)}>
                             Shop Product
                         </button>
