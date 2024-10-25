@@ -16,7 +16,7 @@ public class ProductResource {
     //The logger object is used to log messages to the console.
     private static final Logger logger = LoggerFactory.getLogger(ProductResource.class);
 
-    //The createProduct method takes a Product object as input and persists (adds) it to the database.
+    // Create a new product
     @POST
     @Transactional
     public Response createProduct(Product product) {
@@ -25,14 +25,14 @@ public class ProductResource {
         return Response.status(Response.Status.CREATED).entity(product).build();
     }
 
-    //The getAllProducts method returns all products in the database.
+    // Get all products in the database.
     @GET
     public List<Product> getAllProducts() {
         logger.info("Fetching all products");
         return Product.listAll(); // Retrieve all products
     }
 
-    //The getProduct method takes an ID as input and returns the product with that ID.
+    // Get a product by ID
     @GET
     @Path("{id}")
     public Response getProduct(@PathParam("id") Long id) {
@@ -47,7 +47,7 @@ public class ProductResource {
         return Response.ok(product).build();
     }
 
-    //The updateProduct method takes an ID and a Product object as input and updates the product with that ID.
+    // Update a product by ID
     @PUT
     @Path("{id}")
     @Transactional
@@ -68,7 +68,7 @@ public class ProductResource {
         return Response.ok(existingProduct).build();
     }
 
-    //The deleteProduct method takes an ID as input and deletes the product with that ID.
+    // Delete a product by ID
     @DELETE
     @Path("{id}")
     @Transactional

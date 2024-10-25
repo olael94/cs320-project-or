@@ -9,6 +9,14 @@ h1 {
     align-items: center;
 }
 
+.product-list {
+    display: flex;
+    flex-wrap: wrap; /* Wrap the products to the next line */
+    justify-content: center; /* Center the products */
+    margin: 0 auto;
+    padding-top: 60px;
+}
+
 .input-container {
     display: flex;
     flex-direction: column; /* Stack the input groups vertically */

@@ -5,6 +5,7 @@ nav {
     padding: 10px;
     background-color: #333;
     color: white;
+    z-index: 1000;         /* Stays above other elements */
 }
 
 .logo a {
@@ -84,11 +85,12 @@ nav {
         display: none;
         flex-direction: column;
         position: absolute;
-        top: 60px;
+        top: 54px;
         right: 0;
         background-color: #333;
         width: 100%;
         text-align: left; /* Aligns the whole menu to the left */
+        z-index: 1100;     /* Ensure it appears above other content */
     }
 
     /* When the menu is open, display it */

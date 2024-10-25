@@ -17,31 +17,7 @@ public class UserResource {
     //The logger object is used to log messages to the console.
     private static final Logger logger = LoggerFactory.getLogger(UserResource.class);
 
-    //The getAllUsers method returns all users in the database.
-    @GET
-    public List<User> getAllUsers() {
-        logger.info("Fetching all users");
-        return User.listAll();
-    }
-
-    //The getUser method takes an ID as input and returns the user with that ID.
-    @GET
-    @Path("{id}")
-    public Response getUser(@PathParam("id") Long id) {
-
-        User user = User.findById(id);
-        //If the user is not found, a 404 (NOT FOUND) status code is returned.
-        if (user == null) {
-            logger.error("User with ID {} not found", id);
-            return Response.status(Response.Status.NOT_FOUND)                   //The Response object is used to return a 404 status code with an error message.
-                    .entity("User not found")
-                    .build();                                                   //build() method is used to build the response object.
-        }
-        logger.info("Fetching user with ID {}", id);
-        return Response.ok(user).build();
-    }
-
-    //The createUser method takes a User object as input and persists (adds) it to the database.
+    // Create a new User
     @POST
     @Transactional
     public Response createUser(User user) {
@@ -58,7 +34,31 @@ public class UserResource {
         return Response.status(Response.Status.CREATED).entity(user).build();   //The Response object is used to return the created user with a status code of 201 (CREATED).
     }
 
-    //The updateUser method takes an ID and a User object as input and updates the user with that ID.
+    // Get all users in the database.
+    @GET
+    public List<User> getAllUsers() {
+        logger.info("Fetching all users");
+        return User.listAll();
+    }
+
+    // Get a user by ID
+    @GET
+    @Path("{id}")
+    public Response getUser(@PathParam("id") Long id) {
+
+        User user = User.findById(id);
+        //If the user is not found, a 404 (NOT FOUND) status code is returned.
+        if (user == null) {
+            logger.error("User with ID {} not found", id);
+            return Response.status(Response.Status.NOT_FOUND)                   //The Response object is used to return a 404 status code with an error message.
+                    .entity("User not found")
+                    .build();                                                   //build() method is used to build the response object.
+        }
+        logger.info("Fetching user with ID {}", id);
+        return Response.ok(user).build();
+    }
+
+    // Update a user by ID
     @PUT
     @Path("{id}")
     @Transactional
@@ -75,11 +75,12 @@ public class UserResource {
         existingUser.password = user.password;
         existingUser.role = user.role;
         existingUser.persist();
+
         logger.info("Updated user with ID {}", id);
         return Response.ok(existingUser).build();
     }
 
-    //The deleteUser method takes an ID as input and deletes the user with that ID.
+    // Delete a user by ID
     @DELETE
     @Path("{id}")
     @Transactional

@@ -1,7 +1,7 @@
 /* Slider container */
 .slider-container {
     width: 100%;
-    max-width: 1200px;
+    max-width: 1525px;
     margin: 0 auto;
     padding: 0 0;
 }
@@ -12,14 +12,14 @@
     width: 100%;
 }
 
-.product-image {
+.product-image-slider {
     width: 100%;
     height: auto;
     max-height: 500px;
     object-fit: cover;
 }
 
-.product-name {
+.product-name-slider {
     position: absolute;
     top: 56%;
     left: 10%;

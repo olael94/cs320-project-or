@@ -1,0 +1,41 @@
+.product-tile {
+    display: flex;
+    flex-direction: column; /* Ensures items stack vertically */
+    justify-content: center;
+    align-items: initial; /* Aligns items to the left */
+    max-width: 250px;
+    width: 100%; /* Allows for full width on smaller screens */
+    margin: 10px auto; /* Centers the tile */
+    padding: 0;
+    border: 1px solid #f5f5f5; /* Adds a border around the tile */
+    border-radius: 10px; /* Rounded corners */
+    background: #FDFDFD;
+}
+
+.product-image {
+    width: 100%;
+    height: auto;
+    max-height: 300px;
+    object-fit: cover;
+    border-radius: 10px; /* Rounded corners */
+    cursor: pointer; /* Changes cursor to pointer on hover */
+}
+
+.product-name {
+    /*padding: 1px 0;  Space above and below the product name */
+    padding-top: 10px;
+    padding-left: 10px;
+    color: black;
+    font-size: 16px;
+    font-weight: bold; /* Makes the product name bold */
+    cursor: pointer; /* Changes cursor to pointer on hover */
+}
+
+.product-price {
+    padding: 1px 0; /* Space above and below the product price */
+    padding-left: 10px;
+    color: #0abab5; /* Sets the price color */
+    font-size: 16px;
+    font-weight: bold; /* Makes the price bold */
+    cursor: pointer; /* Changes cursor to pointer on hover */
+}
