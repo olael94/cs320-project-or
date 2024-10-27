@@ -13,6 +13,7 @@ h1 {
     display: flex;
     flex-wrap: wrap; /* Wrap the products to the next line */
     justify-content: center; /* Center the products */
+    max-width: 1525px;
     margin: 0 auto;
     padding-top: 60px;
 }

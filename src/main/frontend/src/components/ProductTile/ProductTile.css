@@ -3,7 +3,8 @@
     flex-direction: column; /* Ensures items stack vertically */
     justify-content: center;
     align-items: initial; /* Aligns items to the left */
-    max-width: 250px;
+    max-width: 270px;
+    max-height: 340px;
     width: 100%; /* Allows for full width on smaller screens */
     margin: 10px auto; /* Centers the tile */
     padding: 0;
@@ -23,12 +24,20 @@
 
 .product-name {
     /*padding: 1px 0;  Space above and below the product name */
-    padding-top: 10px;
+    padding-top: 5px;
     padding-left: 10px;
     color: black;
     font-size: 16px;
     font-weight: bold; /* Makes the product name bold */
     cursor: pointer; /* Changes cursor to pointer on hover */
+
+    /* Multi-line ellipsis styling */
+    display: -webkit-box;
+    -webkit-line-clamp:2; /* Limits to 2 lines */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: normal;
 }
 
 .product-price {
