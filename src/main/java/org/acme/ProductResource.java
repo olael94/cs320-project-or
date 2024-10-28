@@ -20,9 +20,12 @@ public class ProductResource {
     @POST
     @Transactional
     public Response createProduct(Product product) {
-        logger.info("Creating product: {}", product.productName);
+        logger.info("Creating product: {}", product.getProductName());
         product.persist(); // Persist the product
-        return Response.status(Response.Status.CREATED).entity(product).build();
+
+        // User will see this message
+        String message = "Product " + product.getProductName() + " created successfully";
+        return Response.status(Response.Status.CREATED).entity(message).build();
     }
 
     // Get all products in the database.
@@ -40,11 +43,13 @@ public class ProductResource {
         if (product == null) {
             logger.error("Product with ID {} not found", id);
             return Response.status(Response.Status.NOT_FOUND)
-                    .entity("Product not found")
+                    .entity("Product not found") // User will see this message
                     .build();
         }
         logger.info("Fetching product with ID {}", id);
-        return Response.ok(product).build();
+        // User will see this message
+        String message = "Product " + product.getProductName() + "with ID: " + product.id + " retrieved successfully";
+        return Response.ok(message).build();
     }
 
     // Update a product by ID
@@ -56,16 +61,19 @@ public class ProductResource {
         if (existingProduct == null) {
             logger.error("Product with ID {} not found for update", id);
             return Response.status(Response.Status.NOT_FOUND)
-                    .entity("Product not found")
+                    .entity("Product not found") // User will see this message
                     .build();
         }
-        existingProduct.productName = product.productName;
-        existingProduct.description = product.description;
-        existingProduct.price = product.price;
-        existingProduct.imageURL = product.imageURL;
+        existingProduct.setProductName(product.getProductName());
+        existingProduct.setDescription(product.getDescription());
+        existingProduct.setPrice(product.getPrice());
+        existingProduct.setImageURL(product.getImageURL());
         existingProduct.persist();
+
         logger.info("Updated product with ID {}", id);
-        return Response.ok(existingProduct).build();
+        // User will see this message
+        String message = "Product " + existingProduct.getProductName() + " with ID: " + existingProduct.id + " updated successfully";
+        return Response.ok(message).build();
     }
 
     // Delete a product by ID
@@ -77,11 +85,13 @@ public class ProductResource {
         if (product == null) {
             logger.error("Product with ID {} not found for deletion", id);
             return Response.status(Response.Status.NOT_FOUND)
-                    .entity("Product not found")
+                    .entity("Product not found") // User will see this message
                     .build();
         }
         product.delete();
         logger.info("Deleted product with ID {}", id);
-        return Response.status(Response.Status.NO_CONTENT).build();
+        // User will see this message
+        String message = "Product " + product.getProductName() + " with ID: " + product.id + " deleted successfully";
+        return Response.ok(message).build();
     }
 }

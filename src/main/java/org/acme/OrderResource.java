@@ -23,27 +23,26 @@ public class OrderResource {
     public Response createOrder(Order order) {
         logger.info("Received request to create an order");
 
-        if (order.user != null) {
+        if (order.getUser() != null) {
             // Fetch and validate the user if provided
-            User user = User.findById(order.user.id);
+            User user = User.findById(order.getUser().id);
             if (user == null) {
-                logger.warn("User not found for ID: {}", order.user.id);
+                logger.warn("User not found for ID: {}", order.getUser().id);
                 return Response.status(Response.Status.BAD_REQUEST)
-                        .entity("User not found")
+                        .entity("User not found") // User will see this message
                         .build();
             }
-            order.user = user;
+            order.setUser(user);
         }
 
-        order.orderDate = LocalDateTime.now();
-
+        order.setOrderDate(LocalDateTime.now());
         // The guestTrackingId will be generated automatically by the @PrePersist method
 
         order.persist(); // Persist the order to the database
 
-        // Return the tracking ID for guest orders or the order ID for users
-        String trackingInfo = order.user == null
-                ? "Your order guest tracking number is " + order.guestTrackingId
+        // User will see this message
+        String trackingInfo = order.getUser() == null
+                ? "Your order guest tracking number is " + order.getGuestTrackingId()
                 : "Your order tracking number is " + order.id;
 
         logger.info("Order created successfully with tracking info: {}", trackingInfo);
@@ -51,12 +50,6 @@ public class OrderResource {
         return Response.status(Response.Status.CREATED)
                 .entity(trackingInfo)
                 .build();
-    }
-
-    // Get all orders
-    @GET
-    public List<Order> getAllOrders() {
-        return Order.listAll();
     }
 
     // Get GUEST order by guestTrackingId
@@ -68,10 +61,14 @@ public class OrderResource {
         if (order == null) {
             logger.warn("Order not found for guestTrackingId: {}", guestTrackingId);
             return Response.status(Response.Status.NOT_FOUND)
-                    .entity("Order not found")
+                    .entity("Order not found")  // User will see this message
                     .build();
         }
-        return Response.ok(order).build();
+
+        logger.info("Order found for guestTrackingId: {}", guestTrackingId);
+        // User will see this message
+        String message = "Order found for guestTrackingId: " + order.getGuestTrackingId();
+        return Response.ok(message).build();
     }
 
     // Get a specific USER order by ID
@@ -85,10 +82,13 @@ public class OrderResource {
             logger.warn("Order not found for ID: {}", id);
 
             return Response.status(Response.Status.NOT_FOUND)
-                    .entity("Order not found")
+                    .entity("Order not found")  // User will see this message
                     .build();
         }
-        return Response.ok(order).build();
+        logger.info("Order found for ID: {}", id);
+        // User will see this message
+        String message = "Order found for ID: " + order.id;
+        return Response.ok(message).build();
     }
 
     // Update an existing USER order by ID
@@ -103,31 +103,32 @@ public class OrderResource {
             logger.warn("Order not found for ID: {}", id);
 
             return Response.status(Response.Status.NOT_FOUND)
-                    .entity("Order not found")
+                    .entity("Order not found")  // User will see this message
                     .build();
         }
 
         // Check for user existence before updating
-        if (updatedOrder.user != null && updatedOrder.user.id != null) {
-            User user = User.findById(updatedOrder.user.id);
+        if (updatedOrder.getUser() != null && updatedOrder.getUser().id != null) {
+            User user = User.findById(updatedOrder.getUser().id);
             if (user == null) {
-                logger.warn("User not found for ID: {}", updatedOrder.user.id);
+                logger.warn("User not found for ID: {}", updatedOrder.getUser().id);
                 return Response.status(Response.Status.NOT_FOUND)
-                        .entity("User not found")
+                        .entity("User not found")   // User will see this message
                         .build();
             }
-            existingOrder.user = user;
+            existingOrder.setUser(user);
         }
 
         // Update order fields
-        existingOrder.orderDate = updatedOrder.orderDate;
-        existingOrder.totalAmount = updatedOrder.totalAmount;
-        existingOrder.status = updatedOrder.status;
+        existingOrder.setOrderDate(updatedOrder.getOrderDate());
+        existingOrder.setTotalAmount(updatedOrder.getTotalAmount());
+        existingOrder.setStatus(updatedOrder.getStatus());
         existingOrder.persist();
 
         logger.info("Order updated successfully for ID: {}", id);
-
-        return Response.ok(existingOrder).build();
+        // User will see this message
+        String message = "Order updated successfully for ID: " + existingOrder.id;
+        return Response.ok(message).build();
     }
 
     // Update an existing GUEST order by guestTrackingId
@@ -143,20 +144,21 @@ public class OrderResource {
         if (existingGuestOrder == null) {
             logger.warn("Order not found for guestTrackingId: {}", guestTrackingId);
             return Response.status(Response.Status.NOT_FOUND)
-                    .entity("Order not found")
+                    .entity("Order not found")  // User will see this message
                     .build();
         }
 
         // Update order fields
-        existingGuestOrder.orderDate = updatedGuestOrder.orderDate;
-        existingGuestOrder.totalAmount = updatedGuestOrder.totalAmount;
-        existingGuestOrder.status = updatedGuestOrder.status;
+        existingGuestOrder.setOrderDate(updatedGuestOrder.getOrderDate());
+        existingGuestOrder.setTotalAmount(updatedGuestOrder.getTotalAmount());
+        existingGuestOrder.setStatus(updatedGuestOrder.getStatus());
 
         // Persist or update the order
         existingGuestOrder.persist();
 
         logger.info("Guest order updated successfully for guestTrackingId: {}", guestTrackingId);
-
+        // User will see this message
+        String message = "Guest order updated successfully for guestTrackingId: " + existingGuestOrder.getGuestTrackingId();
         return Response.ok(existingGuestOrder).build();
     }
 
@@ -170,12 +172,14 @@ public class OrderResource {
         Order order = Order.findById(id);
         if (order == null) {
             return Response.status(Response.Status.NOT_FOUND)
-                    .entity("Order not found")
+                    .entity("Order not found")  // User will see this message
                     .build();
         }
         order.delete();
         logger.info("Order deleted successfully for ID: {}", id);
-        return Response.noContent().build(); // Return 204 No Content
+        // User will see this message
+        String message = "Order deleted successfully for ID: " + id;
+        return Response.ok(message).build(); // Return 204 No Content
     }
 
     // Delete an order by guestTrackingId
@@ -189,12 +193,14 @@ public class OrderResource {
         if (order == null) {
             logger.warn("Order not found for guestTrackingId: {}", guestTrackingId);
             return Response.status(Response.Status.NOT_FOUND)
-                    .entity("Order not found")
+                    .entity("Order not found")  // User will see this message
                     .build();
         }
         order.delete();
 
-        logger.info("Guest order deleted successfully for tracking ID: {}", guestTrackingId);
+        logger.info("Guest order deleted successfully for guestTrackingID: {}", guestTrackingId);
+        // User will see this message
+        String message = "Guest order deleted successfully for guestTrackingID: " + guestTrackingId;
         return Response.noContent().build(); // Return 204 No Content
     }
 }
