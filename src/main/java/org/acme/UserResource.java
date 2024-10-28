@@ -5,6 +5,7 @@ import org.acme.User;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.mindrot.jbcrypt.BCrypt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,19 +20,61 @@ public class UserResource {
 
     // Create a new User
     @POST
+    @Path("/register")
     @Transactional
     public Response createUser(User user) {
-        logger.info("Creating user: {}", user.username);                        //The logger.info method is used to log the username of the user being created.
+        logger.info("Creating user: {}", user.getUsername()); // Log the username of the user being created.
+
+        // Check if username, email, or password is empty
+        if ((user.getUsername() == null || user.getUsername().isEmpty()) ||
+                (user.getEmail() == null || user.getEmail().isEmpty()) ||
+                (user.getPassword() == null || user.getPassword().isEmpty())) {
+            // If any of the fields are empty, return a bad request response (HTTP 400)
+            return Response.status(Response.Status.BAD_REQUEST).entity("Username, email, and password are required").build();
+        }
 
         // Check if a user with the same email already exists
-        User existingUser = User.find("email", user.email).firstResult();
+        User existingUser = User.find("email", user.getEmail()).firstResult();
         if (existingUser != null) {
             // If a user with the same email exists, return a conflict response (HTTP 409)
             return Response.status(Response.Status.CONFLICT).entity("Email is already in use").build();
         }
 
-        user.persist();                                                         //The persist method is used to add the user to the database.
-        return Response.status(Response.Status.CREATED).entity(user).build();   //The Response object is used to return the created user with a status code of 201 (CREATED).
+        user.persist(); // Persist the user to the database.
+        String message = "Welcome " + user.getUsername() + "! you have successfully created your Store account using " + user.getEmail();
+        return Response.status(Response.Status.CREATED).entity(message).build(); // Return the created user with a status code of 201 (CREATED).
+    }
+
+    // Login a user
+    @POST
+    @Path("/login")
+    @Transactional
+    public Response loginUser(LoginDto loginDto) {
+        logger.info("Logging in user: {}", loginDto.getEmail()); // Log the email of the user attempting to log in.
+
+        // Check if email or password is empty
+        if ((loginDto.getEmail() == null || loginDto.getEmail().isEmpty()) ||
+                (loginDto.getPassword() == null || loginDto.getPassword().isEmpty())) {
+            // If any of the fields are empty, return a bad request response (HTTP 400)
+            return Response.status(Response.Status.BAD_REQUEST).entity("Email and password are required").build();
+        }
+
+        // Find the user by email
+        User user = User.find("email", loginDto.getEmail()).firstResult();
+        if (user == null) {
+            // If no user with the given email exists, return an unauthorized response (HTTP 401)
+            return Response.status(Response.Status.UNAUTHORIZED).entity("Invalid email or password").build();
+        }
+
+        // Check if the provided password matches the stored password
+        if (!BCrypt.checkpw(loginDto.getPassword(), user.getPassword())) {
+            // If the password does not match, return an unauthorized response (HTTP 401)
+            return Response.status(Response.Status.UNAUTHORIZED).entity("Invalid email or password").build();
+        }
+
+        // If the email and password are correct, return an OK response (HTTP 200) and a welcome message
+        String message = "Welcome back! " + user.getUsername();
+        return Response.ok(message).build();
     }
 
     // Get all users in the database.
@@ -55,7 +98,8 @@ public class UserResource {
                     .build();                                                   //build() method is used to build the response object.
         }
         logger.info("Fetching user with ID {}", id);
-        return Response.ok(user).build();
+        String message = "Your Username with ID " + user.id + "was found: " + user.getUsername();
+        return Response.ok(message).build();
     }
 
     // Update a user by ID
@@ -70,14 +114,15 @@ public class UserResource {
                     .entity("User not found")
                     .build();
         }
-        existingUser.username = user.username;
-        existingUser.email = user.email;
-        existingUser.password = user.password;
-        existingUser.role = user.role;
+        existingUser.setUsername(user.getUsername());
+        existingUser.setEmail(user.getEmail());
+        existingUser.setPassword(user.getPassword());
+        existingUser.setRole(user.getRole());
         existingUser.persist();
 
         logger.info("Updated user with ID {}", id);
-        return Response.ok(existingUser).build();
+        String message = "Your Account info. with ID " + user.id + "was updated.";
+        return Response.ok(message).build();
     }
 
     // Delete a user by ID
@@ -94,6 +139,7 @@ public class UserResource {
         }
         existingUser.delete();
         logger.info("Deleted user with ID {}", id);
-        return Response.noContent().build();
+        String message = "Your Account with ID " + existingUser.id + "was deleted.";
+        return Response.ok(message).build();
     }
 }

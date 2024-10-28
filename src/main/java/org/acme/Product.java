@@ -9,14 +9,55 @@ import jakarta.persistence.*;
 public class Product extends PanacheEntity {
     @JsonProperty("productName")
     @Column(nullable = false)
-    public String productName;
+    private String productName;
 
     @Column(nullable = false)
-    public String description;
+    private String description;
 
     @Column(nullable = false)
-    public Double price;
+    private Double price;
 
     @Column(nullable = false)
-    public String imageURL;
+    private String imageURL;
+
+    // Getters
+    public String getProductName() {
+        return productName;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public Double getPrice() {
+        return price;
+    }
+
+    public String getImageURL() {
+        return imageURL;
+    }
+
+    // Setters
+    public void setProductName(String productName) {
+        this.productName = productName;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public void setPrice(Double price) {
+        this.price = price;
+    }
+
+    public void setImageURL(String imageURL) {
+        this.imageURL = imageURL;
+    }
+
+    // The toString method is used to convert the object to a string representation.
+    @Override
+    public String toString() {
+        return productName + " " + description + " " + price + " " + imageURL;
+    }
+
 }
