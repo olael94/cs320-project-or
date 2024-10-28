@@ -28,6 +28,15 @@
     margin-bottom: 15px;
 }
 
+.reset-container {
+    display: flex;
+    flex-direction: row; /* Place label and input side by side */
+    align-items: center;  /* Align label and input vertically */
+    margin-bottom: 15px;
+}
+
+
+
 label {
     font-size: 1.1em;
     margin-right: 10px; /* Add space between label and input */

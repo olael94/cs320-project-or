@@ -125,6 +125,33 @@ public class UserResource {
         return Response.ok(message).build();
     }
 
+    // Reset a user's password with an email
+    @POST
+    @Path("/reset-password")
+    @Transactional
+    public Response resetPassword(PasswordResetDto passwordResetDto) {
+        logger.info("Resetting password for email: {}", passwordResetDto.getEmail());
+
+        // Check if email or new password is empty
+        if (passwordResetDto.getEmail() == null || passwordResetDto.getEmail().isEmpty() ||
+                passwordResetDto.getNewPassword() == null || passwordResetDto.getNewPassword().isEmpty()) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("Email and new password are required").build();
+        }
+
+        // Find the user by email
+        User user = User.find("email", passwordResetDto.getEmail()).firstResult();
+        if (user == null) {
+            return Response.status(Response.Status.NOT_FOUND).entity("Email not found").build();
+        }
+
+        // Update the user's password
+        user.setPassword(BCrypt.hashpw(passwordResetDto.getNewPassword(), BCrypt.gensalt()));
+        user.persist();
+
+        String message = "Password reset successfully.";
+        return Response.ok(message).build();
+    }
+
     // Delete a user by ID
     @DELETE
     @Path("{id}")
