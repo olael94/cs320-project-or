@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import '../styles/AccountPage.css';
+import { API_URL } from '../config';
 
 function AccountPage() {
     const [message, setMessage] = useState('');
@@ -16,7 +17,7 @@ function AccountPage() {
 
     // Register a new user handler
     const handleRegister = async () => {
-        const response = await fetch('/users/register', {
+        const response = await fetch(`${API_URL}/users/register`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -33,7 +34,7 @@ function AccountPage() {
     };
 
     const handleLogin = async () => {
-        const response = await fetch('/users/login', {
+        const response = await fetch(`${API_URL}/users/login`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -56,7 +57,7 @@ function AccountPage() {
             return;
         }
 
-        const response = await fetch('/users/reset-password', {
+        const response = await fetch(`${API_URL}/users/reset-password`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
