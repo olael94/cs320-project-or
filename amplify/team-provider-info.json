@@ -1,0 +1,15 @@
+{
+  "dev": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-cs320projector-dev-2b1fa-authRole",
+      "UnauthRoleArn": "arn:aws:iam::730335528058:role/amplify-cs320projector-dev-2b1fa-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::730335528058:role/amplify-cs320projector-dev-2b1fa-authRole",
+      "Region": "us-west-2",
+      "DeploymentBucketName": "amplify-cs320projector-dev-2b1fa-deployment",
+      "UnauthRoleName": "amplify-cs320projector-dev-2b1fa-unauthRole",
+      "StackName": "amplify-cs320projector-dev-2b1fa",
+      "StackId": "arn:aws:cloudformation:us-west-2:730335528058:stack/amplify-cs320projector-dev-2b1fa/2c13f170-95d2-11ef-8dbd-06457c94ca41",
+      "AmplifyAppId": "dn724fqoont04"
+    }
+  }
+}
