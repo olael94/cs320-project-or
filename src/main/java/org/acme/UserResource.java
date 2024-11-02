@@ -50,26 +50,23 @@ public class UserResource {
     @Path("/login")
     @Transactional
     public Response loginUser(LoginDto loginDto) {
-        logger.info("Logging in user: {}", loginDto.getEmail()); // Log the email of the user attempting to log in.
+        logger.info("Logging in user: {}", loginDto.getEmail());
 
         // Check if email or password is empty
         if ((loginDto.getEmail() == null || loginDto.getEmail().isEmpty()) ||
                 (loginDto.getPassword() == null || loginDto.getPassword().isEmpty())) {
-            // If any of the fields are empty, return a bad request response (HTTP 400)
             return Response.status(Response.Status.BAD_REQUEST).entity("Email and password are required").build();
         }
 
         // Find the user by email
         User user = User.find("email", loginDto.getEmail()).firstResult();
         if (user == null) {
-            // If no user with the given email exists, return an unauthorized response (HTTP 401)
-            return Response.status(Response.Status.UNAUTHORIZED).entity("Invalid email or password").build();
+            return Response.status(Response.Status.UNAUTHORIZED).entity("Invalid email").build();
         }
 
         // Check if the provided password matches the stored password
-        if (!BCrypt.checkpw(loginDto.getPassword(), user.getPassword())) {
-            // If the password does not match, return an unauthorized response (HTTP 401)
-            return Response.status(Response.Status.UNAUTHORIZED).entity("Invalid email or password").build();
+        if (!user.checkPassword(loginDto.getPassword())) {
+            return Response.status(Response.Status.UNAUTHORIZED).entity("Invalid email password").build();
         }
 
         // If the email and password are correct, return an OK response (HTTP 200) and a welcome message
@@ -144,9 +141,20 @@ public class UserResource {
             return Response.status(Response.Status.NOT_FOUND).entity("Email not found").build();
         }
 
-        // Update the user's password
-        user.setPassword(BCrypt.hashpw(passwordResetDto.getNewPassword(), BCrypt.gensalt()));
+        // Log the old password for debugging (do not do this in production)
+        logger.info("Old hashed password: {}", user.getPassword());
+
+        // Update the user's password without hashing it again
+        user.setPassword(passwordResetDto.getNewPassword());
         user.persist();
+        user.getEntityManager().flush(); // Force the persistence context to synchronize with the database
+
+        // Verify the password was updated
+        User updatedUser = User.find("email", passwordResetDto.getEmail()).firstResult();
+        logger.info("Updated hashed password in DB: {}", updatedUser.getPassword());
+
+        // Log the new hashed password for debugging (do not do this in production)
+        logger.info("New hashed password: {}", user.getPassword());
 
         String message = "Password reset successfully.";
         return Response.ok(message).build();
