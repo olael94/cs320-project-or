@@ -19,9 +19,9 @@ const FeaturedSlider = () => {
 
     // Array of products to be displayed in the slider
     const products = [
-        {id: 1, image: image1, name: "Airpods 4", link: '/products/1', price: 100},
-        {id: 2, image: image2, name: "Galaxy Earbuds", link: '/products/2', price: 200},
-        {id: 3, image: image3, name: "PS5 Pro", link: '/products/3', price: 300},
+        {id: 1, image: "https://i.postimg.cc/4xkHmYwf/Airpods-Banner2.png", name: "Airpods 4", link: '/products/1', price: 100},
+        {id: 2, image: "https://i.postimg.cc/7Z3G7qQg/Galaxy-Earbuds.png", name: "Galaxy Earbuds", link: '/products/2', price: 200},
+        {id: 3, image: "https://i.postimg.cc/MG4nJXcJ/PS5PRO.png", name: "PS5 Pro", link: '/products/3', price: 300},
     ]
 
     // Settings for the slider

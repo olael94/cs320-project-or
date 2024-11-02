@@ -18,7 +18,7 @@ function HomePage() {
     const [products, setProducts] = useState([]);
     // Use the useEffect hook to fetch the list of products from the server when the component mounts.
     useEffect(() => {
-        fetch(`${API_URL}http://localhost:8080/products`)
+        fetch(`${API_URL}/products`)
             .then((res) => res.json())
             .then((data) => {
                 console.log("Fetched products:", data); // Check the product field names here

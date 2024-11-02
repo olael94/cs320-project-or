@@ -15,7 +15,7 @@ const Navbar = () => {
         <nav>
             <div className="logo">
                 <NavLink to="/">
-                    <img src={logo} alt="MyApp Logo" className="logo-img"/>
+                    <img src={"https://i.postimg.cc/0QQ0czTg/Logo2-Crop.png"} alt="MyApp Logo" className="logo-img"/>
                 </NavLink>
             </div>
             <div className={`menu ${isOpen ? 'open' : ''}`}>
