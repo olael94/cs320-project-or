@@ -1,0 +1,19 @@
+/* Center the content */
+.ProductsPage-container {
+}
+
+h1 {
+    font-family: Arial, sans-serif; /*Sets the font for the Header*/
+    font-size: 2em;
+    margin-bottom: 20px;
+    align-items: center;
+}
+
+.product-list-detailed {
+    display: flex;
+    flex-wrap: wrap; /* Wrap the products to the next line */
+    justify-content: center; /* Center the products */
+    max-width: 1525px;
+    margin: 0 auto;
+    padding-top: 60px;
+}

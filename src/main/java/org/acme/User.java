@@ -2,6 +2,7 @@ package org.acme;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import org.mindrot.jbcrypt.BCrypt;
 
 @Entity
@@ -16,6 +17,7 @@ public class User extends PanacheEntity {
     @Column(nullable = false)
     private String email;
 
+    @NotNull
     @Column(nullable = false)
     private String password;
 
@@ -55,7 +57,9 @@ public class User extends PanacheEntity {
     }
 
     public void setPassword(String password) {
-        this.password = BCrypt.hashpw(password, BCrypt.gensalt());
+        if (password != null && !password.isEmpty()) {
+            this.password = BCrypt.hashpw(password, BCrypt.gensalt());
+        }
     }
 
     public boolean checkPassword(String password) {

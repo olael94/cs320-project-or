@@ -1,4 +1,19 @@
+.body{
+    align-content: center;
+    display: block;
+}
+
+.logo-img-login {
+    display: block;
+    margin: 50px auto;
+    width: 90px;
+    filter: drop-shadow(
+            0 0 15px rgba(0, 0, 0, .6)
+    );
+}
+
 .input-container {
+    margin: 200px auto;
     display: flex;
     flex-direction: column;
     align-items: center;
