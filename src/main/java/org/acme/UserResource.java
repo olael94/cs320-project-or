@@ -23,26 +23,27 @@ public class UserResource {
     @Path("/register")
     @Transactional
     public Response createUser(User user) {
-        logger.info("Creating user: {}", user.getUsername()); // Log the username of the user being created.
+        logger.info("Creating user: {}", user.getUsername());
 
         // Check if username, email, or password is empty
         if ((user.getUsername() == null || user.getUsername().isEmpty()) ||
                 (user.getEmail() == null || user.getEmail().isEmpty()) ||
                 (user.getPassword() == null || user.getPassword().isEmpty())) {
-            // If any of the fields are empty, return a bad request response (HTTP 400)
             return Response.status(Response.Status.BAD_REQUEST).entity("Username, email, and password are required").build();
         }
 
         // Check if a user with the same email already exists
         User existingUser = User.find("email", user.getEmail()).firstResult();
         if (existingUser != null) {
-            // If a user with the same email exists, return a conflict response (HTTP 409)
             return Response.status(Response.Status.CONFLICT).entity("Email is already in use").build();
         }
 
-        user.persist(); // Persist the user to the database.
-        String message = "Welcome " + user.getUsername() + "! you have successfully created your Store account using " + user.getEmail();
-        return Response.status(Response.Status.CREATED).entity(message).build(); // Return the created user with a status code of 201 (CREATED).
+        // Set the password (this will automatically hash it in the User class)
+        user.setPassword(user.getPassword());
+        user.persist();
+
+        String message = "Welcome " + user.getUsername() + "! You have successfully created your Store account using " + user.getEmail();
+        return Response.status(Response.Status.CREATED).entity(message).build();
     }
 
     // Login a user
@@ -61,12 +62,12 @@ public class UserResource {
         // Find the user by email
         User user = User.find("email", loginDto.getEmail()).firstResult();
         if (user == null) {
-            return Response.status(Response.Status.UNAUTHORIZED).entity("Invalid email").build();
+            return Response.status(Response.Status.UNAUTHORIZED).entity("Invalid email or password").build();
         }
 
         // Check if the provided password matches the stored password
         if (!user.checkPassword(loginDto.getPassword())) {
-            return Response.status(Response.Status.UNAUTHORIZED).entity("Invalid email password").build();
+            return Response.status(Response.Status.UNAUTHORIZED).entity("Invalid email or password").build();
         }
 
         // If the email and password are correct, return an OK response (HTTP 200) and a welcome message

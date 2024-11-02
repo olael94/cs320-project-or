@@ -20,6 +20,9 @@ public class Product extends PanacheEntity {
     @Column(nullable = false)
     private String imageURL;
 
+    @Column(nullable = false)
+    private Integer quantity;
+
     // Getters
     public String getProductName() {
         return productName;
@@ -37,6 +40,10 @@ public class Product extends PanacheEntity {
         return imageURL;
     }
 
+    public Integer getQuantity() {
+        return quantity;
+    }
+
     // Setters
     public void setProductName(String productName) {
         this.productName = productName;
@@ -52,6 +59,10 @@ public class Product extends PanacheEntity {
 
     public void setImageURL(String imageURL) {
         this.imageURL = imageURL;
+    }
+
+    public void setQuantity(Integer quantity) {
+        this.quantity = quantity;
     }
 
     // The toString method is used to convert the object to a string representation.

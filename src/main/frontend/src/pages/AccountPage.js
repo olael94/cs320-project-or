@@ -86,7 +86,8 @@ function AccountPage() {
     };
 
     return (
-        <div>
+        <div className="body">
+            <img src={"https://i.postimg.cc/0QQ0czTg/Logo2-Crop.png"} alt="MyApp Logo" className="logo-img-login"/>
             <div className="input-container">
                 <h2>{isResettingPassword ? "Reset Password" : isRegistering ? "Create Account" : "Sign in"}</h2>
                 {isResettingPassword ? (

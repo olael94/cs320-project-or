@@ -1,0 +1,71 @@
+.productList-tile {
+    display: flex;
+    flex-direction: row; /* Ensures items stack vertically */
+    justify-content: center;
+    max-width: 1200px;
+    height: 270px;
+    width: 100%; /* Allows for full width on smaller screens */
+    margin: 10px auto; /* Centers the tile */
+    padding: 0;
+    border: 1px solid #f5f5f5; /* Adds a border around the tile */
+    border-radius: 10px; /* Rounded corners */
+    background: #FDFDFD;
+}
+
+.left-container {
+    display: flex; /* Enable flexbox */
+    justify-content: center; /* Center contents horizontally */
+    align-items: flex-start; /* Align items to the top */
+    max-width: 200px;
+    padding: 0;
+    margin: 0;
+}
+
+.right-container{
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+    padding: 10px 50px;
+    margin: 0;
+}
+
+.productList-image {
+    width: 100%;
+    height: auto;
+    max-height: 280px;
+    object-fit: cover;
+    border-radius: 10px; /* Rounded corners */
+    cursor: pointer; /* Changes cursor to pointer on hover */
+}
+
+.productList-name {
+    /*padding: 1px 0;  Space above and below the product name */
+    padding-top: 5px;
+    color: black;
+    font-size: 16px;
+    font-weight: bold; /* Makes the product name bold */
+    cursor: pointer; /* Changes cursor to pointer on hover */
+
+    /* Multi-line ellipsis styling */
+    display: -webkit-box;
+    -webkit-line-clamp:2; /* Limits to 2 lines */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: normal;
+}
+
+.productList-price {
+    padding: 1px 0; /* Space above and below the product price */
+    color: #0abab5; /* Sets the price color */
+    font-size: 16px;
+    font-weight: bold; /* Makes the price bold */
+    cursor: pointer; /* Changes cursor to pointer on hover */
+}
+
+.productList-description {
+    padding: 8px 0; /* Space above and below the product price */
+    color: black; /* Sets the price color */
+    font-size: 16px;
+    cursor: pointer; /* Changes cursor to pointer on hover */
+}
