@@ -9,7 +9,7 @@ import java.util.List;
 import org.acme.UserName;
 
 //This defines the path of the resource
-@Path("/hello")
+@Path("/api/hello")
 public class GreetingResource {
 
     @GET// this is a GET HTTP request

@@ -17,7 +17,7 @@ function AccountPage() {
 
     // Register a new user handler
     const handleRegister = async () => {
-        const response = await fetch(`${API_URL}/users/register`, {
+        const response = await fetch(`${API_URL}/api/users/register`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -34,7 +34,7 @@ function AccountPage() {
     };
 
     const handleLogin = async () => {
-        const response = await fetch(`${API_URL}/users/login`, {
+        const response = await fetch(`${API_URL}/api/users/login`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -57,7 +57,7 @@ function AccountPage() {
             return;
         }
 
-        const response = await fetch(`${API_URL}/users/reset-password`, {
+        const response = await fetch(`${API_URL}/api/users/reset-password`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

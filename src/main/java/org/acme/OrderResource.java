@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 import java.time.LocalDateTime;
 import java.util.List;
 
-@Path("/orders")
+@Path("/api/orders")
 @Produces("application/json")
 @Consumes("application/json")
 public class OrderResource {
