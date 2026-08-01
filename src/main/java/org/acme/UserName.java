@@ -7,19 +7,19 @@ import jakarta.persistence.Table;
 @Entity
 @Table(name = "user_names")
 public class UserName extends PanacheEntity {
-    public String name;
+  public String name;
 
-    // Getter for the name field
-    public UserName() {
-    }
-    // Setter for the name field
-    public UserName(String name) {
-        this.name = name;
-    }
+  // Getter for the name field
+  public UserName() {}
 
-    // The toString method is used to convert the object to a string representation.
-    @Override
-    public String toString() {
-        return name;
-    }
+  // Setter for the name field
+  public UserName(String name) {
+    this.name = name;
+  }
+
+  // The toString method is used to convert the object to a string representation.
+  @Override
+  public String toString() {
+    return name;
+  }
 }

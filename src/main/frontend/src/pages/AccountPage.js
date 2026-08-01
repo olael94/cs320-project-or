@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import '../styles/AccountPage.css';
 import { API_URL } from '../config';
 
@@ -26,7 +26,7 @@ function AccountPage() {
         });
 
         const text = await response.text();
-        if (response.status === 400){
+        if (response.status === 400) {
             window.alert(text);
         } else {
             setMessage(text);
@@ -43,17 +43,17 @@ function AccountPage() {
         });
 
         const text = await response.text();
-        if (response.status === 400){
+        if (response.status === 400) {
             window.alert(text);
         } else {
-        setMessage(text);
+            setMessage(text);
         }
     };
 
     // Password reset form
     const handlePasswordReset = async () => {
         if (newPassword !== confirmPassword) {
-            window.alert("Passwords do not match");
+            window.alert('Passwords do not match');
             return;
         }
 
@@ -66,7 +66,7 @@ function AccountPage() {
         });
 
         const text = await response.text();
-        if (response.status === 400){
+        if (response.status === 400) {
             window.alert(text);
         } else {
             setMessage(text);
@@ -87,9 +87,19 @@ function AccountPage() {
 
     return (
         <div className="body">
-            <img src={"https://i.postimg.cc/0QQ0czTg/Logo2-Crop.png"} alt="MyApp Logo" className="logo-img-login"/>
+            <img
+                src={'https://i.postimg.cc/0QQ0czTg/Logo2-Crop.png'}
+                alt="MyApp Logo"
+                className="logo-img-login"
+            />
             <div className="input-container">
-                <h2>{isResettingPassword ? "Reset Password" : isRegistering ? "Create Account" : "Sign in"}</h2>
+                <h2>
+                    {isResettingPassword
+                        ? 'Reset Password'
+                        : isRegistering
+                          ? 'Create Account'
+                          : 'Sign in'}
+                </h2>
                 {isResettingPassword ? (
                     <>
                         <div className="reset-container">
@@ -119,8 +129,19 @@ function AccountPage() {
                                 onChange={(e) => setConfirmPassword(e.target.value)}
                             />
                         </div>
-                        <button onClick={handlePasswordReset} className="submit-button">Reset Password</button>
-                        <p>Remembered your password? <a href="#" onClick={togglePasswordReset}>Sign in</a></p>
+                        <button onClick={handlePasswordReset} className="submit-button">
+                            Reset Password
+                        </button>
+                        <p>
+                            Remembered your password?{' '}
+                            <button
+                                type="button"
+                                className="link-button"
+                                onClick={togglePasswordReset}
+                            >
+                                Sign in
+                            </button>
+                        </p>
                     </>
                 ) : isRegistering ? (
                     <>
@@ -151,8 +172,15 @@ function AccountPage() {
                                 onChange={(e) => setPasswordReg(e.target.value)}
                             />
                         </div>
-                        <button onClick={handleRegister} className="submit-button">Submit</button>
-                        <p>Already have an account? <a href="#" onClick={toggleForm}>Sign in </a></p>
+                        <button onClick={handleRegister} className="submit-button">
+                            Submit
+                        </button>
+                        <p>
+                            Already have an account?{' '}
+                            <button type="button" className="link-button" onClick={toggleForm}>
+                                Sign in{' '}
+                            </button>
+                        </p>
                     </>
                 ) : (
                     <>
@@ -174,9 +202,23 @@ function AccountPage() {
                                 onChange={(e) => setPasswordLogin(e.target.value)}
                             />
                         </div>
-                        <button onClick={handleLogin} className="submit-button">Login</button>
-                        <p>New to the store? </p><a href="#" onClick={toggleForm}>Create your Store Account</a>
-                        <p>Forgot your password? <a href="#" onClick={togglePasswordReset}>Reset here</a></p>
+                        <button onClick={handleLogin} className="submit-button">
+                            Login
+                        </button>
+                        <p>New to the store? </p>
+                        <button type="button" className="link-button" onClick={toggleForm}>
+                            Create your Store Account
+                        </button>
+                        <p>
+                            Forgot your password?{' '}
+                            <button
+                                type="button"
+                                className="link-button"
+                                onClick={togglePasswordReset}
+                            >
+                                Reset here
+                            </button>
+                        </p>
                     </>
                 )}
                 <p>{message}</p>

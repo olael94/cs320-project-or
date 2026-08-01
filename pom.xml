@@ -49,6 +49,10 @@
         </dependency>
         <dependency>
             <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-hibernate-validator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
             <artifactId>quarkus-amazon-lambda-http</artifactId>
         </dependency>
         <dependency>
@@ -128,6 +132,23 @@
                         <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
                         <maven.home>${maven.home}</maven.home>
                     </systemPropertyVariables>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>com.diffplug.spotless</groupId>
+                <artifactId>spotless-maven-plugin</artifactId>
+                <version>3.9.0</version>
+                <configuration>
+                    <java>
+                        <includes>
+                            <include>src/main/java/**/*.java</include>
+                            <include>src/test/java/**/*.java</include>
+                        </includes>
+                        <googleJavaFormat/>
+                        <removeUnusedImports/>
+                        <trimTrailingWhitespace/>
+                        <endWithNewline/>
+                    </java>
                 </configuration>
             </plugin>
         </plugins>

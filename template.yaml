@@ -1,0 +1,60 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: AWS Serverless Quarkus HTTP - cs320-project-or
+
+# Deploy with:
+#   ./mvnw clean package -DskipTests
+#   sam deploy --template-file template.yaml --stack-name cs320-backend \
+#     --capabilities CAPABILITY_IAM --resolve-s3 \
+#     --parameter-overrides DBUsername=$DB_USERNAME DBPassword=$DB_PASSWORD \
+#     --s3-prefix cs320-backend
+#
+# (run `export $(grep -v '^#' .env | xargs)` first so $DB_USERNAME/$DB_PASSWORD are set)
+
+Globals:
+  Api:
+    EndpointConfiguration: REGIONAL
+    BinaryMediaTypes:
+      - "*/*"
+
+Parameters:
+  DBUsername:
+    Type: String
+  DBPassword:
+    Type: String
+    NoEcho: true
+
+Resources:
+  CsProjectOr:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: io.quarkus.amazon.lambda.runtime.QuarkusStreamHandler::handleRequest
+      Runtime: java17
+      CodeUri: target/function.zip
+      MemorySize: 512
+      Timeout: 15
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - AWSLambdaVPCAccessExecutionRole
+      VpcConfig:
+        SecurityGroupIds:
+          - sg-0ec0967c7c7a31623
+        SubnetIds:
+          - subnet-0b29a15a252109c8c
+          - subnet-0d58bf4fdecd9252e
+          - subnet-0449566b972bc68ab
+          - subnet-0577e48118f8a302d
+      Environment:
+        Variables:
+          DB_USERNAME: !Ref DBUsername
+          DB_PASSWORD: !Ref DBPassword
+      Events:
+        HttpApiEvent:
+          Type: HttpApi
+
+Outputs:
+  CsProjectOrApi:
+    Description: URL for application
+    Value: !Sub 'https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com/'
+    Export:
+      Name: CsProjectOrApi

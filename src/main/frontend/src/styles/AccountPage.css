@@ -1,4 +1,4 @@
-.body{
+.body {
     align-content: center;
     display: block;
 }
@@ -7,9 +7,7 @@
     display: block;
     margin: 50px auto;
     width: 90px;
-    filter: drop-shadow(
-            0 0 15px rgba(0, 0, 0, .6)
-    );
+    filter: drop-shadow(0 0 15px rgba(0, 0, 0, 0.6));
 }
 
 .input-container {
@@ -32,25 +30,23 @@
 .registration-container {
     display: flex;
     flex-direction: row; /* Place label and input side by side */
-    align-items: center;  /* Align label and input vertically */
+    align-items: center; /* Align label and input vertically */
     margin-bottom: 15px;
 }
 
 .login-container {
     display: flex;
     flex-direction: row; /* Place label and input side by side */
-    align-items: center;  /* Align label and input vertically */
+    align-items: center; /* Align label and input vertically */
     margin-bottom: 15px;
 }
 
 .reset-container {
     display: flex;
     flex-direction: row; /* Place label and input side by side */
-    align-items: center;  /* Align label and input vertically */
+    align-items: center; /* Align label and input vertically */
     margin-bottom: 15px;
 }
-
-
 
 label {
     font-size: 1.1em;
@@ -76,6 +72,21 @@ input {
     cursor: pointer;
 }
 
+.link-button {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    font: inherit;
+    color: #0645ad;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.link-button:hover {
+    background: none;
+    color: #0b0080;
+}
 
 button:hover {
     background-color: #45a049;

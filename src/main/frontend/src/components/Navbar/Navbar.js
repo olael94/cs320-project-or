@@ -1,7 +1,6 @@
-import React, {useState} from 'react';
-import {NavLink} from 'react-router-dom';
+import React, { useState } from 'react';
+import { NavLink } from 'react-router-dom';
 import './Navbar.css';
-import logo from '../../assets/images/Logo2Crop.png';
 
 const Navbar = () => {
     // State variable to keep track of whether the mobile menu is open or closed
@@ -15,22 +14,47 @@ const Navbar = () => {
         <nav>
             <div className="logo">
                 <NavLink to="/">
-                    <img src={"https://i.postimg.cc/0QQ0czTg/Logo2-Crop.png"} alt="MyApp Logo" className="logo-img"/>
+                    <img
+                        src={'https://i.postimg.cc/0QQ0czTg/Logo2-Crop.png'}
+                        alt="MyApp Logo"
+                        className="logo-img"
+                    />
                 </NavLink>
             </div>
             <div className={`menu ${isOpen ? 'open' : ''}`}>
                 <ul>
                     <li>
-                        <NavLink to="/" end className={({isActive}) => isActive ? 'active' : undefined}>Home</NavLink>
+                        <NavLink
+                            to="/"
+                            end
+                            className={({ isActive }) => (isActive ? 'active' : undefined)}
+                        >
+                            Home
+                        </NavLink>
                     </li>
                     <li>
-                        <NavLink to="/products" className={({isActive}) => isActive ? 'active' : undefined}>Products</NavLink>
+                        <NavLink
+                            to="/products"
+                            className={({ isActive }) => (isActive ? 'active' : undefined)}
+                        >
+                            Products
+                        </NavLink>
                     </li>
                     <li>
-                        <NavLink to="/account" className={({isActive}) => isActive ? 'active' : undefined}>Account</NavLink>
+                        <NavLink
+                            to="/account"
+                            className={({ isActive }) => (isActive ? 'active' : undefined)}
+                        >
+                            Account
+                        </NavLink>
                     </li>
                     <li>
-                        <NavLink to="/cart" className={({isActive}) => isActive ? 'active' : undefined}>Cart</NavLink>
+                        <NavLink
+                            to="/cart"
+                            className={({ isActive }) => (isActive ? 'active' : undefined)}
+                        >
+                            Cart
+                        </NavLink>
                     </li>
                 </ul>
             </div>
@@ -41,7 +65,7 @@ const Navbar = () => {
                 <span></span>
             </div>
         </nav>
-    )
-}
+    );
+};
 
 export default Navbar;

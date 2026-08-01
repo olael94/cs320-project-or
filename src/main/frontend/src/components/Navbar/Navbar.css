@@ -5,7 +5,7 @@ nav {
     padding: 10px;
     background-color: #333;
     color: white;
-    z-index: 1000;         /* Stays above other elements */
+    z-index: 1000; /* Stays above other elements */
 }
 
 .logo a {
@@ -18,12 +18,10 @@ nav {
     width: 20px; /* Adjust size as needed */
     height: auto; /* Maintain aspect ratio */
     padding-left: 10px;
-    filter: drop-shadow(
-            0 0 2px rgba(255, 255, 255, 1)
-    );
+    filter: drop-shadow(0 0 2px rgba(255, 255, 255, 1));
 }
 
-.menu{
+.menu {
     flex-grow: 1; /* Allows the menu to expand and take available space */
     text-align: center; /* Centers the links */
 }
@@ -93,7 +91,7 @@ nav {
         background-color: #333;
         width: 100%;
         text-align: left; /* Aligns the whole menu to the left */
-        z-index: 1100;     /* Ensure it appears above other content */
+        z-index: 1100; /* Ensure it appears above other content */
     }
 
     /* When the menu is open, display it */
