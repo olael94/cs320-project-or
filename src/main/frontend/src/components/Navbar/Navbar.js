@@ -21,16 +21,16 @@ const Navbar = () => {
             <div className={`menu ${isOpen ? 'open' : ''}`}>
                 <ul>
                     <li>
-                        <NavLink exact to="/" activeClassName="active">Home</NavLink>
+                        <NavLink to="/" end className={({isActive}) => isActive ? 'active' : undefined}>Home</NavLink>
                     </li>
                     <li>
-                        <NavLink to="/products" activeClassName="active">Products</NavLink>
+                        <NavLink to="/products" className={({isActive}) => isActive ? 'active' : undefined}>Products</NavLink>
                     </li>
                     <li>
-                        <NavLink to="/account" activeClassName="active">Account</NavLink>
+                        <NavLink to="/account" className={({isActive}) => isActive ? 'active' : undefined}>Account</NavLink>
                     </li>
                     <li>
-                        <NavLink to="/cart" activeClassName="active">Cart</NavLink>
+                        <NavLink to="/cart" className={({isActive}) => isActive ? 'active' : undefined}>Cart</NavLink>
                     </li>
                 </ul>
             </div>
