@@ -1,4 +1,5 @@
 .product-tile {
+    text-decoration: none;
     display: flex;
     flex-direction: column; /* Ensures items stack vertically */
     justify-content: center;
@@ -13,6 +14,9 @@
     background: #fdfdfd;
 }
 
+.product-tile:hover .product-name {
+    color: #d9704f;
+}
 .product-image {
     width: 100%;
     height: 220px;

@@ -29,7 +29,8 @@ function HomePage() {
             <div className="product-list">
                 {products.map((product) => (
                     <ProductTile
-                        key={product.id}
+                        key={product.id}    // This is an internal key for React
+                        id={product.id} // This is the accessible id prop for each ProductTile component
                         productName={product.productName}
                         imageURL={product.imageURL}
                         price={product.price}

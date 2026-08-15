@@ -23,6 +23,7 @@ function ProductsPage() {
                 {products.map((product) => (
                     <ProductListTile
                         key={product.id}
+                        id={product.id} // This is the accessible id prop for each ProductListTile component
                         productName={product.productName}
                         description={product.description}
                         imageURL={product.imageURL}

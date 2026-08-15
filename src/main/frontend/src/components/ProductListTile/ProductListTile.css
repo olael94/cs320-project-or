@@ -1,4 +1,5 @@
 .productList-tile {
+    text-decoration: none;
     display: flex;
     flex-direction: row; /* Ensures items stack vertically */
     justify-content: center;
@@ -10,6 +11,10 @@
     border: 1px solid #f5f5f5; /* Adds a border around the tile */
     border-radius: 10px; /* Rounded corners */
     background: #fdfdfd;
+}
+
+.productList-tile:hover .productList-name {
+    color: #d9704f;
 }
 
 .left-container {

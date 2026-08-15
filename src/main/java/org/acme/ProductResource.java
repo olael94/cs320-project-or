@@ -46,14 +46,7 @@ public class ProductResource {
           .build();
     }
     logger.info("Fetching product with ID {}", id);
-    // User will see this message
-    String message =
-        "Product "
-            + product.getProductName()
-            + "with ID: "
-            + product.id
-            + " retrieved successfully";
-    return Response.ok(message).build();
+    return Response.ok(product).build();
   }
 
   // Update a product by ID
