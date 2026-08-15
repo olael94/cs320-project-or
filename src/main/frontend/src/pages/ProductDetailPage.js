@@ -25,7 +25,7 @@ function ProductDetailPage() {
     return (
         <div className="ProductDetailPage-container">
             <div className="detail-left">
-                <img src={product.imageURL} alt={product.productName} className="detail-image"/>
+                <img src={product.imageURL} alt={product.productName} className="detail-image" />
             </div>
             <div className="detail-right">
                 <h1 className="detail-name">{product.productName}</h1>

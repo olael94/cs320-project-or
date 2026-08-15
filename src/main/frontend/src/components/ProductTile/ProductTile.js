@@ -10,7 +10,7 @@ const ProductTile = ({ id, productName, imageURL, price }) => {
             <div className="product-name">{productName}</div>
             <div className="product-price">${price.toFixed(2)}</div>
         </Link>
-    )
+    );
 };
 
 export default ProductTile;
