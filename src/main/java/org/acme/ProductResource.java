@@ -5,6 +5,7 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,10 +29,29 @@ public class ProductResource {
   }
 
   // Get all products in the database.
+  // Returns a lightweight summary (no description) to keep list responses small.
   @GET
-  public List<Product> getAllProducts() {
+  public List<ProductSummary> getAllProducts() {
     logger.info("Fetching all products");
-    return Product.listAll(); // Retrieve all products
+    List<Product> products = Product.listAll();
+    return products.stream().map(ProductSummary::new).collect(Collectors.toList());
+  }
+
+  // Lightweight product representation for list views.
+  public static class ProductSummary {
+    public Long id;
+    public String productName;
+    public Double price;
+    public String imageURL;
+    public Integer quantity;
+
+    public ProductSummary(Product product) {
+      this.id = product.id;
+      this.productName = product.getProductName();
+      this.price = product.getPrice();
+      this.imageURL = product.getImageURL();
+      this.quantity = product.getQuantity();
+    }
   }
 
   // Get a product by ID

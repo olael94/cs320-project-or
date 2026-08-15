@@ -22,7 +22,6 @@
     height: auto;
     max-height: 500px;
     object-fit: contain;
-    mix-blend-mode: multiply;
 }
 
 .product-name-slider {
