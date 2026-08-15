@@ -1,19 +1,21 @@
-package org.acme;
+package org.acme.controller;
 
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Response;
 import java.time.LocalDateTime;
+import org.acme.entity.Order;
+import org.acme.entity.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Path("/api/orders")
 @Produces("application/json")
 @Consumes("application/json")
-public class OrderResource {
+public class OrderController {
 
   // The logger object is used to log messages to the console.
-  private static final Logger logger = LoggerFactory.getLogger(OrderResource.class);
+  private static final Logger logger = LoggerFactory.getLogger(OrderController.class);
 
   // Create a new order (guest or user)
   @POST

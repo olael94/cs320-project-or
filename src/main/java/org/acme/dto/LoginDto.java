@@ -1,4 +1,4 @@
-package org.acme;
+package org.acme.dto;
 
 public class LoginDto {
   private String email;

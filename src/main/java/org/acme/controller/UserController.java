@@ -1,19 +1,22 @@
-package org.acme;
+package org.acme.controller;
 
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.util.List;
+import org.acme.dto.LoginDto;
+import org.acme.dto.PasswordResetDto;
+import org.acme.entity.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Path("/api/users")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public class UserResource {
+public class UserController {
   // The logger object is used to log messages to the console.
-  private static final Logger logger = LoggerFactory.getLogger(UserResource.class);
+  private static final Logger logger = LoggerFactory.getLogger(UserController.class);
 
   // Create a new User
   @POST

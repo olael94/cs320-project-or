@@ -1,4 +1,4 @@
-package org.acme;
+package org.acme.controller;
 
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.*;
@@ -6,15 +6,17 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.acme.dto.ProductSummaryDto;
+import org.acme.entity.Product;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Path("/api/products")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public class ProductResource {
+public class ProductController {
   // The logger object is used to log messages to the console.
-  private static final Logger logger = LoggerFactory.getLogger(ProductResource.class);
+  private static final Logger logger = LoggerFactory.getLogger(ProductController.class);
 
   // Create a new product
   @POST
@@ -31,27 +33,10 @@ public class ProductResource {
   // Get all products in the database.
   // Returns a lightweight summary (no description) to keep list responses small.
   @GET
-  public List<ProductSummary> getAllProducts() {
+  public List<ProductSummaryDto> getAllProducts() {
     logger.info("Fetching all products");
     List<Product> products = Product.listAll();
-    return products.stream().map(ProductSummary::new).collect(Collectors.toList());
-  }
-
-  // Lightweight product representation for list views.
-  public static class ProductSummary {
-    public Long id;
-    public String productName;
-    public Double price;
-    public String imageURL;
-    public Integer quantity;
-
-    public ProductSummary(Product product) {
-      this.id = product.id;
-      this.productName = product.getProductName();
-      this.price = product.getPrice();
-      this.imageURL = product.getImageURL();
-      this.quantity = product.getQuantity();
-    }
+    return products.stream().map(ProductSummaryDto::new).collect(Collectors.toList());
   }
 
   // Get a product by ID
