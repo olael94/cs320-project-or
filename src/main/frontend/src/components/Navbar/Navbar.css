@@ -1,11 +1,48 @@
 nav {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px;
-    background-color: #333;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    /* 16px page-to-slider gap, plus another 16px slider-to-navbar gap */
+    padding-top: 32px;
     color: white;
     z-index: 1000; /* Stays above other elements */
+}
+
+/* The visible floating block. Nested 16px inside the slider's own edges
+   (which are themselves 16px inside the true page edges - see
+   .slider-container), at every viewport size: the calc() handles narrow
+   screens, the reduced max-width handles wide screens. */
+.nav-inner {
+    position: relative;
+    width: calc(100% - 64px);
+    max-width: 1461px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 30px;
+    /* .logo is absolutely positioned (to stay centered), so it no longer
+       contributes to this element's height via normal flow - without an
+       explicit min-height, the bar would size itself only to the text/icon
+       content and the taller logo would overflow above and below it. */
+    min-height: 96px;
+    background-color: rgba(15, 15, 15, 0.35);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-radius: 20px;
+    box-sizing: border-box;
+}
+
+/* Absolutely positioned (rather than a normal flex child) so it stays
+   perfectly centered in .nav-inner regardless of how wide nav-primary
+   and nav-secondary happen to be on either side. */
+.logo {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
 }
 
 .logo a {
@@ -15,26 +52,40 @@ nav {
 }
 
 .logo-img {
-    width: 20px; /* Adjust size as needed */
+    width: 44px; /* Adjust size as needed */
     height: auto; /* Maintain aspect ratio */
-    padding-left: 10px;
     filter: drop-shadow(0 0 2px rgba(255, 255, 255, 1));
 }
 
 .menu {
     flex-grow: 1; /* Allows the menu to expand and take available space */
-    text-align: center; /* Centers the links */
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* nav-primary on the left, nav-secondary on the right */
+}
+
+.nav-primary {
+    padding-left: 20px; /* Matches .nav-secondary's padding-right for symmetry */
 }
 
 .menu ul {
     list-style-type: none;
     margin: 0;
     padding: 0;
-    display: inline-flex; /* Keeps the links inline and centered */
+    display: flex;
+    align-items: center;
 }
 
 .menu ul li {
     margin-right: 20px;
+}
+
+.nav-secondary {
+    padding-right: 20px;
+}
+
+.nav-secondary li:last-child {
+    margin-right: 0;
 }
 
 .menu ul li a {
@@ -51,10 +102,98 @@ nav {
     color: #ffcc00; /* Change color for active link */
 }
 
+.signin-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.account-menu {
+    position: relative;
+    display: inline-block;
+}
+
+.avatar-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: #0abab5;
+    color: white;
+    border: none;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.avatar-btn:hover {
+    opacity: 0.85;
+}
+
+/* Invisible hit-area bridging the gap between the trigger and the visible
+   panel below, so the mouse never leaves account-menu while crossing it. */
+.account-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    padding-top: 10px;
+    z-index: 1200;
+}
+
+.account-dropdown-panel {
+    background-color: white;
+    color: #333;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    min-width: 160px;
+    overflow: hidden;
+    text-align: left;
+}
+
+.account-dropdown-header {
+    padding: 10px 14px;
+    font-size: 13px;
+    border-bottom: 1px solid #eee;
+    color: #666;
+}
+
+.account-dropdown-panel button,
+.account-dropdown-panel a {
+    display: block;
+    width: 100%;
+    padding: 10px 14px;
+    background: none;
+    border: none;
+    text-align: left;
+    font-size: 14px;
+    color: #333;
+    cursor: pointer;
+    text-decoration: none;
+    box-sizing: border-box;
+}
+
+.account-dropdown-panel button:hover,
+.account-dropdown-panel a:hover {
+    background-color: #f5f5f5;
+    color: #333;
+}
+
+/* Beats .menu ul li a's specificity, which otherwise leaks white text
+   color through this nested NavLink. */
+.account-dropdown-panel .dropdown-signin-btn,
+.account-dropdown-panel .dropdown-signin-btn:hover {
+    color: #333;
+}
+
 /* MobileMenu icon */
 .mobileMenu {
     display: none;
     flex-direction: column;
+    /* Pins it to the right now that .logo is absolutely positioned and no
+       longer a flex sibling pushing it there via justify-content. */
+    margin-left: auto;
     cursor: pointer;
 }
 
@@ -85,8 +224,10 @@ nav {
     .menu {
         display: none;
         flex-direction: column;
+        justify-content: flex-start;
+        align-items: stretch;
         position: absolute;
-        top: 54px;
+        top: 100%;
         right: 0;
         background-color: #333;
         width: 100%;
