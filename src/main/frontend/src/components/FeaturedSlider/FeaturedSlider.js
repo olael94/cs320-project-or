@@ -47,7 +47,6 @@ const FeaturedSlider = () => {
                             className="featured-product-inner"
                             style={{ background: bannerGradients[index % bannerGradients.length] }}
                         >
-                            <span className="featured-badge">Featured</span>
                             <img
                                 src={product.imageURL}
                                 alt={product.productName}

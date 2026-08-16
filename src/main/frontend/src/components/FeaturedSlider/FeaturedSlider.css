@@ -1,8 +1,10 @@
-/* Slider container */
+/* Slider container. Same 16px-from-viewport-edge formula as .nav-inner,
+   so the slider and the floating navbar block stay aligned and equally
+   inset at every screen size. */
 .slider-container {
-    width: 100%;
-    max-width: 1525px;
-    margin: 0 auto;
+    width: calc(100% - 32px);
+    max-width: 1493px;
+    margin: 16px auto 0;
     padding: 0 0;
 }
 
@@ -14,13 +16,21 @@
 .featured-product-inner {
     position: relative;
     width: 100%;
+    height: 620px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding-bottom: 30px;
     background-color: #141414;
+    border-radius: 20px; /* Matches .nav-inner's corner radius */
+    overflow: hidden;
+    box-sizing: border-box;
 }
 
 .product-image-slider {
     width: 100%;
     height: auto;
-    max-height: 500px;
+    max-height: 450px;
     object-fit: contain;
 }
 
