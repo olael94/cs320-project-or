@@ -6,6 +6,7 @@ import HomePage from './pages/HomePage'; // Ensure you have a HomePage component
 import ProductsPage from './pages/ProductsPage';
 import ProductDetailPage from './pages/ProductDetailPage';
 import AccountPage from './pages/AccountPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 import CartPage from './pages/CartPage';
 
 const App = () => {
@@ -19,6 +20,7 @@ const App = () => {
                     <Route path="/products" element={<ProductsPage />} />
                     <Route path="/products/:id" element={<ProductDetailPage />} />
                     <Route path="/account" element={<AccountPage />} />
+                    <Route path="/reset-password" element={<ResetPasswordPage />} />
                     <Route path="/cart" element={<CartPage />} />
                 </Routes>
             </AuthProvider>

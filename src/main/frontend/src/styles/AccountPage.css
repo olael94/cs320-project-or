@@ -3,6 +3,14 @@
     display: block;
 }
 
+.reset-password-body {
+    /* Unlike AccountPage, this page has no logo image above the form to
+       provide clearance from the fixed navbar, so the container itself
+       needs the top padding instead. Matches .logo-img-login's margin-top
+       for visual consistency between the two pages. */
+    padding-top: 180px;
+}
+
 .logo-img-login {
     display: block;
     /* 130px clears the fixed navbar's height, plus the original 50px breathing room */

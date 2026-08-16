@@ -1,5 +1,7 @@
 package org.acme.controller;
 
+import io.quarkus.mailer.Mail;
+import io.quarkus.mailer.Mailer;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.*;
@@ -7,17 +9,18 @@ import jakarta.ws.rs.core.Cookie;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.NewCookie;
 import jakarta.ws.rs.core.Response;
-import java.security.SecureRandom;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Base64;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.acme.dto.LoginDto;
-import org.acme.dto.PasswordResetDto;
+import org.acme.dto.PasswordResetConfirmDto;
+import org.acme.dto.PasswordResetRequestDto;
 import org.acme.dto.UserDto;
+import org.acme.entity.PasswordResetToken;
 import org.acme.entity.Session;
 import org.acme.entity.User;
+import org.acme.util.TokenGenerator;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,19 +32,16 @@ public class UserController {
   // The logger object is used to log messages to the console.
   private static final Logger logger = LoggerFactory.getLogger(UserController.class);
 
-  // Generates a cryptographically random token for session and CSRF identifiers.
-  private static final SecureRandom RANDOM = new SecureRandom();
-
-  private static String generateToken() {
-    byte[] bytes = new byte[32];
-    RANDOM.nextBytes(bytes);
-    return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
-  }
-
   // Inject the configuration properties using CDI to
   @Inject
   @ConfigProperty(name = "app.cookie.secure")
   boolean cookieSecure;
+
+  @Inject Mailer mailer;
+
+  @Inject
+  @ConfigProperty(name = "app.base-url")
+  String baseUrl;
 
   // Create a new User
   @POST
@@ -105,8 +105,8 @@ public class UserController {
     // Create a new session for the user
     Session session = new Session();
     session.user = user;
-    session.token = generateToken();
-    session.csrfToken = generateToken();
+    session.token = TokenGenerator.generate();
+    session.csrfToken = TokenGenerator.generate();
     session.expiresAt = Instant.now().plus(7, ChronoUnit.DAYS); // 7 days from now to expire
     session.persist();
 
@@ -239,45 +239,88 @@ public class UserController {
 
   // Reset a user's password with an email
   @POST
-  @Path("/reset-password")
+  @Path("/reset-password/request")
   @Transactional
-  public Response resetPassword(PasswordResetDto passwordResetDto) {
-    logger.info("Resetting password for email: {}", passwordResetDto.getEmail());
+  public Response requestPasswordReset(PasswordResetRequestDto requestDto) {
+    logger.info("Resetting password for email: {}", requestDto.getEmail());
 
-    // Check if email or new password is empty
-    if (passwordResetDto.getEmail() == null
-        || passwordResetDto.getEmail().isEmpty()
-        || passwordResetDto.getNewPassword() == null
-        || passwordResetDto.getNewPassword().isEmpty()) {
-      return Response.status(Response.Status.BAD_REQUEST)
-          .entity("Email and new password are required")
-          .build();
+    // Check if email is empty
+    if (requestDto.getEmail() == null || requestDto.getEmail().isEmpty()) {
+      return Response.status(Response.Status.BAD_REQUEST).entity("Email is required").build();
     }
 
     // Find the user by email
-    User user = User.find("email", passwordResetDto.getEmail()).firstResult();
-    if (user == null) {
-      return Response.status(Response.Status.NOT_FOUND).entity("Email not found").build();
+    User user = User.find("email", requestDto.getEmail()).firstResult();
+    if (user != null) {
+      // Invalidate any previous unused reset tokens for this user, so only
+      // the newest link is ever valid.
+      PasswordResetToken.update("used = true where user = ?1 and used = false", user);
+
+      PasswordResetToken resetToken = new PasswordResetToken();
+      resetToken.user = user;
+      resetToken.token = TokenGenerator.generate();
+      resetToken.expiresAt = Instant.now().plus(1, ChronoUnit.HOURS);
+      resetToken.persist();
+
+      String resetLink = baseUrl + "/reset-password?token=" + resetToken.token;
+      mailer.send(
+          Mail.withText(
+              user.getEmail(),
+              "Reset your password",
+              "Click the link below to reset your password. This link expires in 1 hour.\n\n"
+                  + resetLink));
+      logger.info("Password reset email sent to: {}", user.getEmail());
     }
 
-    // Log the old password for debugging (do not do this in production)
-    logger.info("Old hashed password: {}", user.getPassword());
+    // Always the same response, whether or not that email has an account -
+    // otherwise this endpoint could be used to check which emails are registered.
+    return Response.ok("If that email is registered, a reset link has been sent.").build();
+  }
 
-    // Update the user's password without hashing it again
-    user.setPassword(passwordResetDto.getNewPassword());
-    user.persist();
-    user.getEntityManager()
-        .flush(); // Force the persistence context to synchronize with the database
+  // Read-only check so the frontend can tell the user a link is dead
+  // before they fill out and submit the form.
+  @GET
+  @Path("/reset-password/validate")
+  public Response validateResetToken(@QueryParam("token") String token) {
+    if (token == null || token.isEmpty()) {
+      return Response.status(Response.Status.BAD_REQUEST).build();
+    }
+    if (PasswordResetToken.findValid(token) == null) {
+      return Response.status(Response.Status.UNAUTHORIZED).build();
+    }
+    return Response.ok().build();
+  }
 
-    // Verify the password was updated
-    User updatedUser = User.find("email", passwordResetDto.getEmail()).firstResult();
-    logger.info("Updated hashed password in DB: {}", updatedUser.getPassword());
+  @POST
+  @Path("/reset-password/confirm")
+  @Transactional
+  public Response confirmPasswordReset(PasswordResetConfirmDto confirmDto) {
+    if (confirmDto.getToken() == null
+        || confirmDto.getToken().isEmpty()
+        || confirmDto.getNewPassword() == null
+        || confirmDto.getNewPassword().isEmpty()) {
+      return Response.status(Response.Status.BAD_REQUEST)
+          .entity("Token and new password are required")
+          .build();
+    }
 
-    // Log the new hashed password for debugging (do not do this in production)
-    logger.info("New hashed password: {}", user.getPassword());
+    PasswordResetToken resetToken = PasswordResetToken.findValid(confirmDto.getToken());
+    if (resetToken == null) {
+      return Response.status(Response.Status.UNAUTHORIZED)
+          .entity("Invalid or expired reset link")
+          .build();
+    }
 
-    String message = "Password reset successfully.";
-    return Response.ok(message).build();
+    User user = resetToken.user;
+    user.setPassword(confirmDto.getNewPassword());
+    resetToken.used = true;
+
+    // Invalidate every existing session for this user - if the password needed
+    // resetting, any session an attacker already holds should die too.
+    Session.delete("user", user);
+
+    logger.info("Password reset completed for user: {}", user.getUsername());
+    return Response.ok("Password reset successfully.").build();
   }
 
   // Delete a user by ID

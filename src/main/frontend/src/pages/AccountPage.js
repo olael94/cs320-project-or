@@ -14,8 +14,6 @@ function AccountPage() {
     const [isRegistering, setIsRegistering] = useState(false);
     const [isResettingPassword, setIsResettingPassword] = useState(false);
     const [resetEmail, setResetEmail] = useState('');
-    const [newPassword, setNewPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
 
     // Register a new user handler
     const handleRegister = async () => {
@@ -44,23 +42,18 @@ function AccountPage() {
         }
     };
 
-    // Password reset form
+    // Password reset request - sends a reset link to the given email
     const handlePasswordReset = async () => {
-        if (newPassword !== confirmPassword) {
-            window.alert('Passwords do not match');
-            return;
-        }
-
-        const response = await fetch(`${API_URL}/api/users/reset-password`, {
+        const response = await fetch(`${API_URL}/api/users/reset-password/request`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ email: resetEmail, newPassword }),
+            body: JSON.stringify({ email: resetEmail }),
         });
 
         const text = await response.text();
-        if (response.status === 400) {
+        if (!response.ok) {
             window.alert(text);
         } else {
             setMessage(text);
@@ -105,26 +98,8 @@ function AccountPage() {
                                 onChange={(e) => setResetEmail(e.target.value)}
                             />
                         </div>
-                        <div className="reset-container">
-                            <label>New Password:</label>
-                            <input
-                                type="password"
-                                placeholder="New password"
-                                value={newPassword}
-                                onChange={(e) => setNewPassword(e.target.value)}
-                            />
-                        </div>
-                        <div className="reset-container">
-                            <label>Confirm Password:</label>
-                            <input
-                                type="password"
-                                placeholder="Confirm password"
-                                value={confirmPassword}
-                                onChange={(e) => setConfirmPassword(e.target.value)}
-                            />
-                        </div>
                         <button onClick={handlePasswordReset} className="submit-button">
-                            Reset Password
+                            Send Reset Link
                         </button>
                         <p>
                             Remembered your password?{' '}

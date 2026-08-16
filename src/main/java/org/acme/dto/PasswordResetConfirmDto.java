@@ -1,15 +1,16 @@
 package org.acme.dto;
 
-public class PasswordResetDto {
-  private String email;
+/** DTO for confirming password reset. */
+public class PasswordResetConfirmDto {
+  private String token;
   private String newPassword;
 
-  public String getEmail() {
-    return email;
+  public String getToken() {
+    return token;
   }
 
-  public void setEmail(String email) {
-    this.email = email;
+  public void setToken(String token) {
+    this.token = token;
   }
 
   public String getNewPassword() {
