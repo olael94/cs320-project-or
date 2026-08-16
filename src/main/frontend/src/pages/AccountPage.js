@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import '../styles/AccountPage.css';
 import { API_URL } from '../config';
+import { useAuth } from '../context/AuthContext';
 
 function AccountPage() {
+    const { login } = useAuth();
     const [message, setMessage] = useState('');
     const [usernameReg, setUsernameReg] = useState('');
     const [emailReg, setEmailReg] = useState('');
@@ -34,19 +36,11 @@ function AccountPage() {
     };
 
     const handleLogin = async () => {
-        const response = await fetch(`${API_URL}/api/users/login`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ email: emailLogin, password: passwordLogin }),
-        });
-
-        const text = await response.text();
-        if (response.status === 400) {
-            window.alert(text);
-        } else {
-            setMessage(text);
+        try {
+            const user = await login(emailLogin, passwordLogin);
+            setMessage(`Welcome back, ${user.username}!`);
+        } catch (err) {
+            window.alert(err.message);
         }
     };
 
