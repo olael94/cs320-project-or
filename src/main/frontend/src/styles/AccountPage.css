@@ -5,13 +5,18 @@
 
 .logo-img-login {
     display: block;
-    margin: 50px auto;
+    /* 130px clears the fixed navbar's height, plus the original 50px breathing room */
+    margin: 180px auto 50px;
     width: 90px;
     filter: drop-shadow(0 0 15px rgba(0, 0, 0, 0.6));
 }
 
 .input-container {
-    margin: 200px auto;
+    /* Normal document flow, right below the logo, instead of an absolute
+       position pinned to a viewport percentage - that way it always
+       follows the logo's actual position, even if spacing above it
+       changes later (e.g. navbar height). */
+    margin: 40px auto 60px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -19,10 +24,6 @@
     max-width: 400px;
     border: 1px solid #ccc;
     border-radius: 8px;
-    position: absolute;
-    top: 30%;
-    left: 50%;
-    transform: translate(-50%, -50%);
     background-color: #f9f9f9;
     box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
 }

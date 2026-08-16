@@ -1,0 +1,4 @@
+.CartPage-container {
+    /* 130px clears the fixed navbar's height, plus 40px breathing room */
+    padding: 170px 20px 40px;
+}

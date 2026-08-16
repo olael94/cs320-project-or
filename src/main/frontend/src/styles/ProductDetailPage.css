@@ -3,8 +3,9 @@
     flex-wrap: wrap;
     gap: 40px;
     max-width: 1100px;
-    margin: 60px auto;
-    padding: 0 20px;
+    margin: 0 auto 60px;
+    /* 130px clears the fixed navbar's height, plus the original 60px breathing room */
+    padding: 190px 20px 0;
 }
 
 .detail-left {
