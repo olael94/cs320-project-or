@@ -1,8 +1,9 @@
-package org.acme;
+package org.acme.entity;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
+import java.time.Instant;
 import org.mindrot.jbcrypt.BCrypt;
 
 @Entity
@@ -25,11 +26,16 @@ public class User extends PanacheEntity {
   @Enumerated(EnumType.STRING)
   private Role role;
 
-  private enum Role {
+  public enum Role {
     customer,
     admin,
     vendor,
   }
+
+  @Column(nullable = false)
+  private int failedLoginAttempts = 0;
+
+  private Instant lockedUntil;
 
   // Getters
   public String getUsername() {
@@ -48,6 +54,14 @@ public class User extends PanacheEntity {
     return role;
   }
 
+  public int getFailedLoginAttempts() {
+    return failedLoginAttempts;
+  }
+
+  public Instant getLockedUntil() {
+    return lockedUntil;
+  }
+
   // Setters
   public void setUsername(String username) {
     this.username = username;
@@ -61,6 +75,14 @@ public class User extends PanacheEntity {
     if (password != null && !password.isEmpty()) {
       this.password = BCrypt.hashpw(password, BCrypt.gensalt());
     }
+  }
+
+  public void setFailedLoginAttempts(int failedLoginAttempts) {
+    this.failedLoginAttempts = failedLoginAttempts;
+  }
+
+  public void setLockedUntil(Instant lockedUntil) {
+    this.lockedUntil = lockedUntil;
   }
 
   public boolean checkPassword(String password) {

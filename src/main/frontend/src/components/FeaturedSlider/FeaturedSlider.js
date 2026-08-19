@@ -43,8 +43,10 @@ const FeaturedSlider = () => {
             <Slider {...settings}>
                 {products.map((product, index) => (
                     <div key={product.id} className="featured-product">
-                        <div className="featured-product-inner" style={{ background: bannerGradients[index % bannerGradients.length] }}>
-                            <span className="featured-badge">Featured</span>
+                        <div
+                            className="featured-product-inner"
+                            style={{ background: bannerGradients[index % bannerGradients.length] }}
+                        >
                             <img
                                 src={product.imageURL}
                                 alt={product.productName}

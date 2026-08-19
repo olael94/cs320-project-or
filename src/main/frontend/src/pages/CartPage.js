@@ -1,6 +1,8 @@
+import '../styles/CartPage.css';
+
 function CartPage() {
     return (
-        <div>
+        <div className="CartPage-container">
             <h1>CartPage</h1>
         </div>
     );
