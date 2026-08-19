@@ -28,7 +28,6 @@ import org.slf4j.LoggerFactory;
 
 @Path("/api/users")
 @Produces(MediaType.APPLICATION_JSON)
-@Consumes(MediaType.APPLICATION_JSON)
 public class UserController {
   // The logger object is used to log messages to the console.
   private static final Logger logger = LoggerFactory.getLogger(UserController.class);
@@ -49,6 +48,7 @@ public class UserController {
   // Create a new User
   @POST
   @Path("/register")
+  @Consumes(MediaType.APPLICATION_JSON)
   @Transactional
   public Response createUser(User user) {
     logger.info("Creating user: {}", user.getUsername());
@@ -81,6 +81,7 @@ public class UserController {
   // Login a user
   @POST
   @Path("/login")
+  @Consumes(MediaType.APPLICATION_JSON)
   @Transactional
   public Response loginUser(LoginDto loginDto) {
     logger.info("Logging in user: {}", loginDto.getEmail());
@@ -251,6 +252,7 @@ public class UserController {
   // Update the current user's profile
   @PUT
   @Path("/me")
+  @Consumes(MediaType.APPLICATION_JSON)
   @Transactional
   public Response updateCurrentUser(
       @CookieParam("session") Cookie sessionCookie, UpdateUserDto updateDto) {
@@ -285,6 +287,7 @@ public class UserController {
 
   @POST
   @Path("/me/change-password")
+  @Consumes(MediaType.APPLICATION_JSON)
   @Transactional
   public Response changePassword(
       @CookieParam("session") Cookie sessionCookie, ChangePasswordDto changeDto) {
@@ -338,6 +341,7 @@ public class UserController {
   // Reset a user's password with an email
   @POST
   @Path("/reset-password/request")
+  @Consumes(MediaType.APPLICATION_JSON)
   @Transactional
   public Response requestPasswordReset(PasswordResetRequestDto requestDto) {
     logger.info("Resetting password for email: {}", requestDto.getEmail());
@@ -394,6 +398,7 @@ public class UserController {
 
   @POST
   @Path("/reset-password/confirm")
+  @Consumes(MediaType.APPLICATION_JSON)
   @Transactional
   public Response confirmPasswordReset(PasswordResetConfirmDto confirmDto) {
     if (confirmDto.getToken() == null
