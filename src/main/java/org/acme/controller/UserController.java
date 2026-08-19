@@ -13,10 +13,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.stream.Collectors;
-import org.acme.dto.LoginDto;
-import org.acme.dto.PasswordResetConfirmDto;
-import org.acme.dto.PasswordResetRequestDto;
-import org.acme.dto.UserDto;
+import org.acme.dto.*;
 import org.acme.entity.PasswordResetToken;
 import org.acme.entity.Session;
 import org.acme.entity.User;
@@ -216,25 +213,91 @@ public class UserController {
     return Response.ok(message).build();
   }
 
-  // Update a user by ID
+  // Update the current user's profile
   @PUT
-  @Path("{id}")
+  @Path("/me")
   @Transactional
-  public Response updateUser(@PathParam("id") Long id, User user) {
-    User existingUser = User.findById(id);
-    if (existingUser == null) {
-      logger.error("User with ID {} not found for update", id);
-      return Response.status(Response.Status.NOT_FOUND).entity("User not found").build();
+  public Response updateCurrentUser(
+      @CookieParam("session") Cookie sessionCookie, UpdateUserDto updateDto) {
+    // Check if the session cookie is present
+    if (sessionCookie == null) {
+      return Response.status(Response.Status.UNAUTHORIZED).build();
     }
-    existingUser.setUsername(user.getUsername());
-    existingUser.setEmail(user.getEmail());
-    existingUser.setPassword(user.getPassword());
-    existingUser.setRole(user.getRole());
-    existingUser.persist();
 
-    logger.info("Updated user with ID {}", id);
-    String message = "Your Account info. with ID " + user.id + "was updated.";
-    return Response.ok(message).build();
+    // Find the session by token
+    Session session = Session.findValid(sessionCookie.getValue());
+    if (session == null) {
+      return Response.status(Response.Status.UNAUTHORIZED).build();
+    }
+
+    // Get the user associated with the session
+    User user = session.user;
+
+    // Update the user's information based on the provided DTO if the fields are not null or empty
+    if (updateDto.getUsername() != null && !updateDto.getUsername().isEmpty()) {
+      user.setUsername(updateDto.getUsername());
+    }
+    if (updateDto.getEmail() != null && !updateDto.getEmail().isEmpty()) {
+      user.setEmail(updateDto.getEmail());
+    }
+
+    // Persist the changes to the database
+    user.persist();
+
+    logger.info("Updated profile for user: {}", user.getUsername());
+    return Response.ok(new UserDto(user)).build();
+  }
+
+  @POST
+  @Path("/me/change-password")
+  @Transactional
+  public Response changePassword(
+      @CookieParam("session") Cookie sessionCookie, ChangePasswordDto changeDto) {
+    // Check if the session cookie is present
+    if (sessionCookie == null) {
+      return Response.status(Response.Status.UNAUTHORIZED).build();
+    }
+    // Find the session by token
+    Session session = Session.findValid(sessionCookie.getValue());
+    if (session == null) {
+      return Response.status(Response.Status.UNAUTHORIZED).build();
+    }
+
+    // Validate the input DTO
+    if (changeDto.getCurrentPassword() == null
+        || changeDto.getCurrentPassword().isEmpty()
+        || changeDto.getNewPassword() == null
+        || changeDto.getNewPassword().isEmpty()) {
+      return Response.status(Response.Status.BAD_REQUEST)
+          .entity("Current password and new password are required")
+          .build();
+    }
+
+    // Get the user associated with the session
+    User user = session.user;
+    // Check if the current password is correct
+    if (!user.checkPassword(changeDto.getCurrentPassword())) {
+      return Response.status(Response.Status.UNAUTHORIZED)
+          .entity("Current password is incorrect")
+          .build();
+    }
+
+    // Update the user's password
+    user.setPassword(changeDto.getNewPassword());
+
+    // Invalidate all existing sessions for this user except the current one
+    Session.delete("user = ?1 and token != ?2", user, session.token);
+
+    mailer.send(
+        Mail.withText(
+            user.getEmail(),
+            "Your Password was changed",
+            "Your password has been changed successfully. If this wasn't you, go to "
+                + baseUrl
+                + "/account and use \"Forgot Password?\" to secure your account immediately."));
+
+    logger.info("Password changed for user: {}", user.getUsername());
+    return Response.ok("Password changed successfully.").build();
   }
 
   // Reset a user's password with an email
