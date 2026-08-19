@@ -12,6 +12,7 @@ import jakarta.ws.rs.core.Cookie;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.NewCookie;
 import jakarta.ws.rs.core.Response;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -31,6 +32,8 @@ import org.slf4j.LoggerFactory;
 public class UserController {
   // The logger object is used to log messages to the console.
   private static final Logger logger = LoggerFactory.getLogger(UserController.class);
+  private static final int MAX_LOGIN_ATTEMPTS = 5;
+  private static final Duration LOCKOUT_DURATION = Duration.ofMinutes(15);
 
   // Inject the configuration properties using CDI to
   @Inject
@@ -92,11 +95,31 @@ public class UserController {
 
     // Find the user by email
     User user = User.find("email", loginDto.getEmail()).firstResult();
+
+    if (user != null
+        && user.getLockedUntil() != null
+        && user.getLockedUntil().isAfter(Instant.now())) {
+      return Response.status(429)
+          .entity(new MessageDto("Too many failed login attempts. Try again later."))
+          .build();
+    }
+
     if (user == null || !user.checkPassword(loginDto.getPassword())) {
+      if (user != null) {
+        user.setFailedLoginAttempts(user.getFailedLoginAttempts() + 1);
+        if (user.getFailedLoginAttempts() >= MAX_LOGIN_ATTEMPTS) {
+          user.setLockedUntil(Instant.now().plus(LOCKOUT_DURATION));
+          user.setFailedLoginAttempts(0);
+        }
+      }
       return Response.status(Response.Status.UNAUTHORIZED)
           .entity(new MessageDto("Invalid email or password"))
           .build();
     }
+
+    // Successful login - clear any lockout state
+    user.setFailedLoginAttempts(0);
+    user.setLockedUntil(null);
 
     logger.info("User logged in successfully: {}", user.getUsername());
 
