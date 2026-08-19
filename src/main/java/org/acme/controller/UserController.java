@@ -129,7 +129,12 @@ public class UserController {
     session.user = user;
     session.token = TokenGenerator.generate();
     session.csrfToken = TokenGenerator.generate();
-    session.expiresAt = Instant.now().plus(7, ChronoUnit.DAYS); // 7 days from now to expire
+    Instant now = Instant.now(); // Use Instant.now() to get the current time
+    session.expiresAt =
+        now.plus(Session.IDLE_WINDOW); // Set the session expiration time to now + idle window
+    session.absoluteExpiresAt =
+        now.plus(
+            Session.ABSOLUTE_WINDOW); // Set the absolute expiration time to now + absolute window
     session.persist();
 
     logger.info("Session created for user: {}", user.getUsername());
