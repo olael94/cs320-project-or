@@ -1,5 +1,8 @@
 package org.acme.controller;
 
+import static io.quarkus.hibernate.orm.panache.PanacheEntity_.id;
+
+import io.quarkus.hibernate.orm.panache.Panache;
 import io.quarkus.mailer.Mail;
 import io.quarkus.mailer.Mailer;
 import jakarta.inject.Inject;
@@ -387,19 +390,56 @@ public class UserController {
     return Response.ok("Password reset successfully.").build();
   }
 
-  // Delete a user by ID
+  // Delete the current user's own account
   @DELETE
-  @Path("{id}")
+  @Path("/me")
   @Transactional
-  public Response deleteUser(@PathParam("id") Long id) {
-    User existingUser = User.findById(id);
-    if (existingUser == null) {
-      logger.error("User with ID {} not found for deletion", id);
-      return Response.status(Response.Status.NOT_FOUND).entity("User not found").build();
+  public Response deleteCurrentUser(@CookieParam("session") Cookie sessionCookie) {
+    // Check if the session cookie is present
+    if (sessionCookie == null) {
+      return Response.status(Response.Status.UNAUTHORIZED).build();
     }
-    existingUser.delete();
-    logger.info("Deleted user with ID {}", id);
-    String message = "Your Account with ID " + existingUser.id + "was deleted.";
-    return Response.ok(message).build();
+    // Find the session by token
+    Session session = Session.findValid(sessionCookie.getValue());
+    if (session == null) {
+      return Response.status(Response.Status.UNAUTHORIZED).build();
+    }
+
+    User user = session.user;
+    Long userId = user.id;
+
+    // Remove dependent rows first - Session and PasswordResetToken both have a
+    // non-nullable FK to User, so deleting the user row while those still
+    // reference it would violate that constraint at the database level.
+    Session.delete("user", user);
+    PasswordResetToken.delete("user", user);
+    Panache.getEntityManager().clear();
+
+    User.findById(userId).delete();
+
+    logger.info("Deleted account for user: {}", user.getUsername());
+
+    NewCookie expiredSessionCookie =
+        new NewCookie.Builder("session")
+            .value("")
+            .path("/")
+            .httpOnly(true)
+            .secure(cookieSecure)
+            .sameSite(NewCookie.SameSite.LAX)
+            .maxAge(0) // Expire the cookie immediately
+            .build();
+    NewCookie expiredCsrf =
+        new NewCookie.Builder("csrf_token")
+            .value("")
+            .path("/")
+            .httpOnly(false)
+            .secure(cookieSecure)
+            .sameSite(NewCookie.SameSite.LAX)
+            .maxAge(0) // Expire the cookie immediately
+            .build();
+
+    return Response.ok("Account deleted successfully.")
+        .cookie(expiredSessionCookie, expiredCsrf)
+        .build();
   }
 }
