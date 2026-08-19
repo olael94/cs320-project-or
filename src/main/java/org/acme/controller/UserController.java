@@ -55,26 +55,24 @@ public class UserController {
         || (user.getEmail() == null || user.getEmail().isEmpty())
         || (user.getPassword() == null || user.getPassword().isEmpty())) {
       return Response.status(Response.Status.BAD_REQUEST)
-          .entity("Username, email, and password are required")
+          .entity(new MessageDto("Username, email, and password are required"))
           .build();
     }
 
     // Check if a user with the same email already exists
     User existingUser = User.find("email", user.getEmail()).firstResult();
     if (existingUser != null) {
-      return Response.status(Response.Status.CONFLICT).entity("Email is already in use").build();
+      return Response.status(Response.Status.CONFLICT)
+          .entity(new MessageDto("Email is already in use"))
+          .build();
     }
 
     // The password is already hashed at this point: Jackson called setPassword() while
     // deserializing the request body, which hashes it in User.setPassword().
     user.persist();
 
-    String message =
-        "Welcome "
-            + user.getUsername()
-            + "! You have successfully created your Store account using "
-            + user.getEmail();
-    return Response.status(Response.Status.CREATED).entity(message).build();
+    logger.info("Created user: {}", user.getUsername());
+    return Response.status(Response.Status.CREATED).entity(new UserDto(user)).build();
   }
 
   // Login a user
@@ -88,7 +86,7 @@ public class UserController {
     if ((loginDto.getEmail() == null || loginDto.getEmail().isEmpty())
         || (loginDto.getPassword() == null || loginDto.getPassword().isEmpty())) {
       return Response.status(Response.Status.BAD_REQUEST)
-          .entity("Email and password are required")
+          .entity(new MessageDto("Email and password are required"))
           .build();
     }
 
@@ -96,7 +94,7 @@ public class UserController {
     User user = User.find("email", loginDto.getEmail()).firstResult();
     if (user == null || !user.checkPassword(loginDto.getPassword())) {
       return Response.status(Response.Status.UNAUTHORIZED)
-          .entity("Invalid email or password")
+          .entity(new MessageDto("Invalid email or password"))
           .build();
     }
 
@@ -283,7 +281,7 @@ public class UserController {
         || changeDto.getNewPassword() == null
         || changeDto.getNewPassword().isEmpty()) {
       return Response.status(Response.Status.BAD_REQUEST)
-          .entity("Current password and new password are required")
+          .entity(new MessageDto("Current password and new password are required"))
           .build();
     }
 
@@ -292,7 +290,7 @@ public class UserController {
     // Check if the current password is correct
     if (!user.checkPassword(changeDto.getCurrentPassword())) {
       return Response.status(Response.Status.UNAUTHORIZED)
-          .entity("Current password is incorrect")
+          .entity(new MessageDto("Current password is incorrect"))
           .build();
     }
 
@@ -311,7 +309,7 @@ public class UserController {
                 + "/account and use \"Forgot Password?\" to secure your account immediately."));
 
     logger.info("Password changed for user: {}", user.getUsername());
-    return Response.ok("Password changed successfully.").build();
+    return Response.ok(new MessageDto("Password changed successfully.")).build();
   }
 
   // Reset a user's password with an email
@@ -323,7 +321,9 @@ public class UserController {
 
     // Check if email is empty
     if (requestDto.getEmail() == null || requestDto.getEmail().isEmpty()) {
-      return Response.status(Response.Status.BAD_REQUEST).entity("Email is required").build();
+      return Response.status(Response.Status.BAD_REQUEST)
+          .entity(new MessageDto("Email is required"))
+          .build();
     }
 
     // Find the user by email
@@ -351,7 +351,8 @@ public class UserController {
 
     // Always the same response, whether or not that email has an account -
     // otherwise this endpoint could be used to check which emails are registered.
-    return Response.ok("If that email is registered, a reset link has been sent.").build();
+    return Response.ok(new MessageDto("If that email is registered, a reset link has been sent."))
+        .build();
   }
 
   // Read-only check so the frontend can tell the user a link is dead
@@ -377,14 +378,14 @@ public class UserController {
         || confirmDto.getNewPassword() == null
         || confirmDto.getNewPassword().isEmpty()) {
       return Response.status(Response.Status.BAD_REQUEST)
-          .entity("Token and new password are required")
+          .entity(new MessageDto("Token and new password are required"))
           .build();
     }
 
     PasswordResetToken resetToken = PasswordResetToken.findValid(confirmDto.getToken());
     if (resetToken == null) {
       return Response.status(Response.Status.UNAUTHORIZED)
-          .entity("Invalid or expired reset link")
+          .entity(new MessageDto("Invalid or expired reset link"))
           .build();
     }
 
@@ -397,7 +398,7 @@ public class UserController {
     Session.delete("user", user);
 
     logger.info("Password reset completed for user: {}", user.getUsername());
-    return Response.ok("Password reset successfully.").build();
+    return Response.ok(new MessageDto("Password reset successfully.")).build();
   }
 
   // Delete the current user's own account
@@ -448,7 +449,7 @@ public class UserController {
             .maxAge(0) // Expire the cookie immediately
             .build();
 
-    return Response.ok("Account deleted successfully.")
+    return Response.ok(new MessageDto("Account deleted successfully."))
         .cookie(expiredSessionCookie, expiredCsrf)
         .build();
   }

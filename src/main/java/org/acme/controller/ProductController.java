@@ -6,6 +6,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.acme.dto.MessageDto;
 import org.acme.dto.ProductSummaryDto;
 import org.acme.entity.Product;
 import org.slf4j.Logger;
@@ -27,7 +28,7 @@ public class ProductController {
 
     // User will see this message
     String message = "Product " + product.getProductName() + " created successfully";
-    return Response.status(Response.Status.CREATED).entity(message).build();
+    return Response.status(Response.Status.CREATED).entity(new MessageDto(message)).build();
   }
 
   // Get all products in the database.
@@ -47,7 +48,7 @@ public class ProductController {
     if (product == null) {
       logger.error("Product with ID {} not found", id);
       return Response.status(Response.Status.NOT_FOUND)
-          .entity("Product not found") // User will see this message
+          .entity(new MessageDto("Product not found")) // User will see this message
           .build();
     }
     logger.info("Fetching product with ID {}", id);
@@ -63,7 +64,7 @@ public class ProductController {
     if (existingProduct == null) {
       logger.error("Product with ID {} not found for update", id);
       return Response.status(Response.Status.NOT_FOUND)
-          .entity("Product not found") // User will see this message
+          .entity(new MessageDto("Product not found")) // User will see this message
           .build();
     }
     existingProduct.setProductName(product.getProductName());
@@ -80,7 +81,7 @@ public class ProductController {
             + " with ID: "
             + existingProduct.id
             + " updated successfully";
-    return Response.ok(message).build();
+    return Response.ok(new MessageDto(message)).build();
   }
 
   // Delete a product by ID
@@ -92,7 +93,7 @@ public class ProductController {
     if (product == null) {
       logger.error("Product with ID {} not found for deletion", id);
       return Response.status(Response.Status.NOT_FOUND)
-          .entity("Product not found") // User will see this message
+          .entity(new MessageDto("Product not found")) // User will see this message
           .build();
     }
     product.delete();
@@ -100,6 +101,6 @@ public class ProductController {
     // User will see this message
     String message =
         "Product " + product.getProductName() + " with ID: " + product.id + " deleted successfully";
-    return Response.ok(message).build();
+    return Response.ok(new MessageDto(message)).build();
   }
 }

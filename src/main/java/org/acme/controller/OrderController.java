@@ -4,6 +4,7 @@ import jakarta.transaction.Transactional;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Response;
 import java.time.LocalDateTime;
+import org.acme.dto.MessageDto;
 import org.acme.entity.Order;
 import org.acme.entity.User;
 import org.slf4j.Logger;
@@ -29,7 +30,7 @@ public class OrderController {
       if (user == null) {
         logger.warn("User not found for ID: {}", order.getUser().id);
         return Response.status(Response.Status.BAD_REQUEST)
-            .entity("User not found") // User will see this message
+            .entity(new MessageDto("User not found")) // User will see this message
             .build();
       }
       order.setUser(user);
@@ -48,7 +49,7 @@ public class OrderController {
 
     logger.info("Order created successfully with tracking info: {}", trackingInfo);
 
-    return Response.status(Response.Status.CREATED).entity(trackingInfo).build();
+    return Response.status(Response.Status.CREATED).entity(new MessageDto(trackingInfo)).build();
   }
 
   // Get GUEST order by guestTrackingId
@@ -60,14 +61,14 @@ public class OrderController {
     if (order == null) {
       logger.warn("Order not found for guestTrackingId: {}", guestTrackingId);
       return Response.status(Response.Status.NOT_FOUND)
-          .entity("Order not found") // User will see this message
+          .entity(new MessageDto("Order not found")) // User will see this message
           .build();
     }
 
     logger.info("Order found for guestTrackingId: {}", guestTrackingId);
     // User will see this message
     String message = "Order found for guestTrackingId: " + order.getGuestTrackingId();
-    return Response.ok(message).build();
+    return Response.ok(new MessageDto(message)).build();
   }
 
   // Get a specific USER order by ID
@@ -81,13 +82,13 @@ public class OrderController {
       logger.warn("Order not found for ID: {}", id);
 
       return Response.status(Response.Status.NOT_FOUND)
-          .entity("Order not found") // User will see this message
+          .entity(new MessageDto("Order not found")) // User will see this message
           .build();
     }
     logger.info("Order found for ID: {}", id);
     // User will see this message
     String message = "Order found for ID: " + order.id;
-    return Response.ok(message).build();
+    return Response.ok(new MessageDto(message)).build();
   }
 
   // Update an existing USER order by ID
@@ -102,7 +103,7 @@ public class OrderController {
       logger.warn("Order not found for ID: {}", id);
 
       return Response.status(Response.Status.NOT_FOUND)
-          .entity("Order not found") // User will see this message
+          .entity(new MessageDto("Order not found")) // User will see this message
           .build();
     }
 
@@ -112,7 +113,7 @@ public class OrderController {
       if (user == null) {
         logger.warn("User not found for ID: {}", updatedOrder.getUser().id);
         return Response.status(Response.Status.NOT_FOUND)
-            .entity("User not found") // User will see this message
+            .entity(new MessageDto("User not found")) // User will see this message
             .build();
       }
       existingOrder.setUser(user);
@@ -127,7 +128,7 @@ public class OrderController {
     logger.info("Order updated successfully for ID: {}", id);
     // User will see this message
     String message = "Order updated successfully for ID: " + existingOrder.id;
-    return Response.ok(message).build();
+    return Response.ok(new MessageDto(message)).build();
   }
 
   // Update an existing GUEST order by guestTrackingId
@@ -144,7 +145,7 @@ public class OrderController {
     if (existingGuestOrder == null) {
       logger.warn("Order not found for guestTrackingId: {}", guestTrackingId);
       return Response.status(Response.Status.NOT_FOUND)
-          .entity("Order not found") // User will see this message
+          .entity(new MessageDto("Order not found")) // User will see this message
           .build();
     }
 
@@ -174,14 +175,14 @@ public class OrderController {
     Order order = Order.findById(id);
     if (order == null) {
       return Response.status(Response.Status.NOT_FOUND)
-          .entity("Order not found") // User will see this message
+          .entity(new MessageDto("Order not found")) // User will see this message
           .build();
     }
     order.delete();
     logger.info("Order deleted successfully for ID: {}", id);
     // User will see this message
     String message = "Order deleted successfully for ID: " + id;
-    return Response.ok(message).build(); // Return 204 No Content
+    return Response.ok(new MessageDto(message)).build(); // Return 204 No Content
   }
 
   // Delete an order by guestTrackingId
@@ -195,7 +196,7 @@ public class OrderController {
     if (order == null) {
       logger.warn("Order not found for guestTrackingId: {}", guestTrackingId);
       return Response.status(Response.Status.NOT_FOUND)
-          .entity("Order not found") // User will see this message
+          .entity(new MessageDto("Order not found")) // User will see this message
           .build();
     }
     order.delete();
