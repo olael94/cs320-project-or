@@ -195,22 +195,23 @@ public class UserController {
   // Get a user by ID
   @GET
   @Path("{id}")
-  public Response getUser(@PathParam("id") Long id) {
-
-    User user = User.findById(id);
-    // If the user is not found, a 404 (NOT FOUND) status code is returned.
-    if (user == null) {
-      logger.error("User with ID {} not found", id);
-      return Response.status(
-              Response.Status
-                  .NOT_FOUND) // The Response object is used to return a 404 status code with an
-          // error message.
-          .entity("User not found")
-          .build(); // build() method is used to build the response object.
+  public Response getUser(@PathParam("id") Long id, @CookieParam("session") Cookie sessionCookie) {
+    // Check if the session cookie is present
+    if (sessionCookie == null) {
+      return Response.status(Response.Status.UNAUTHORIZED).build();
     }
+    // Find the session by token
+    Session session = Session.findValid(sessionCookie.getValue());
+    if (session == null) {
+      return Response.status(Response.Status.UNAUTHORIZED).build();
+    }
+    // Check if the user ID in the session matches the requested user ID
+    if (!session.user.id.equals(id)) {
+      return Response.status(Response.Status.FORBIDDEN).build();
+    }
+
     logger.info("Fetching user with ID {}", id);
-    String message = "Your Username with ID " + user.id + "was found: " + user.getUsername();
-    return Response.ok(message).build();
+    return Response.ok(new UserDto(session.user)).build();
   }
 
   // Update the current user's profile
