@@ -4,8 +4,10 @@ import static io.restassured.RestAssured.given;
 
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.restassured.response.Response;
+import java.time.Instant;
 import java.util.UUID;
 import org.acme.entity.PasswordResetToken;
+import org.acme.entity.Session;
 import org.acme.entity.User;
 
 /** Shared helpers for auth-related tests: each test gets its own isolated account. */
@@ -68,5 +70,31 @@ public class TestAuthHelper {
                       .firstResult();
               return token.token;
             });
+  }
+
+  /** Directly overrides a session's expiry fields, so sliding-expiry tests don't have to wait. */
+  public static void setSessionExpiry(
+      String sessionToken, Instant expiresAt, Instant absoluteExpiresAt) {
+    QuarkusTransaction.requiringNew()
+        .run(
+            () -> {
+              Session session = Session.find("token", sessionToken).firstResult();
+              session.expiresAt = expiresAt;
+              session.absoluteExpiresAt = absoluteExpiresAt;
+              session.persist();
+            });
+  }
+
+  public static Instant getSessionExpiresAt(String sessionToken) {
+    return QuarkusTransaction.requiringNew()
+        .call(() -> Session.find("token", sessionToken).<Session>firstResult().expiresAt);
+  }
+
+  /**
+   * Calls Session.findValid() with no ambient transaction, matching how it's actually called in
+   * production (from filters, which aren't @Transactional).
+   */
+  public static Session findValidSession(String sessionToken) {
+    return Session.findValid(sessionToken);
   }
 }
