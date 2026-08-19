@@ -189,10 +189,20 @@ public class UserController {
 
   // Get all users in the database.
   @GET
-  public List<UserDto> getAllUsers() {
+  public Response getAllUsers(@CookieParam("session") Cookie sessionCookie) {
+    // Check if the session cookie is present
+    if (sessionCookie == null) {
+      return Response.status(Response.Status.UNAUTHORIZED).build();
+    }
+    // Find the session by token
+    Session session = Session.findValid(sessionCookie.getValue());
+    if (session == null) {
+      return Response.status(Response.Status.UNAUTHORIZED).build();
+    }
+
     logger.info("Fetching all users");
     List<User> users = User.listAll();
-    return users.stream().map(UserDto::new).collect(Collectors.toList());
+    return Response.ok(users.stream().map(UserDto::new).collect(Collectors.toList())).build();
   }
 
   // Get a user by ID
