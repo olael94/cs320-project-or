@@ -166,7 +166,8 @@ class UserControllerTest {
           .get("/api/users/me")
           .then()
           .statusCode(200)
-          .body("email", equalTo(user.email()));
+          .body("email", equalTo(user.email()))
+          .body("role", equalTo("customer"));
     }
 
     @Test
