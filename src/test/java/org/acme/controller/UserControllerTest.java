@@ -445,6 +445,31 @@ class UserControllerTest {
           .then()
           .statusCode(400);
     }
+
+    @Test
+    void updateUserRole_targetUserNotFound_returns404() {
+      AuthenticatedUser admin = TestAuthHelper.registerAndLogin();
+      TestAuthHelper.setUserRole(admin.email(), User.Role.admin);
+      long adminId =
+          given()
+              .cookie("session", admin.sessionCookie())
+              .get("/api/users/me")
+              .jsonPath()
+              .getLong("id");
+
+      // An id well past any id a test run could plausibly have created.
+      long nonexistentId = adminId + 1_000_000L;
+
+      given()
+          .cookie("session", admin.sessionCookie())
+          .header("X-CSRF-Token", admin.csrfToken())
+          .contentType("application/json")
+          .body("{\"role\":\"vendor\"}")
+          .put("/api/users/" + nonexistentId + "/role")
+          .then()
+          .statusCode(404)
+          .body("message", equalTo("User not found"));
+    }
   }
 
   @Nested
