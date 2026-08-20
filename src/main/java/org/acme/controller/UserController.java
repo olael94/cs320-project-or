@@ -254,6 +254,55 @@ public class UserController {
     return Response.ok(new UserDto(session.user)).build();
   }
 
+  // Change user's role (Admin Only)
+  @PUT
+  @Path("{id}/role")
+  @Consumes(MediaType.APPLICATION_JSON)
+  @Transactional
+  public Response updateUserRole(
+      @PathParam("id") Long id,
+      @CookieParam("session") Cookie sessionCookie,
+      UpdateRoleDto updateRoleDto) {
+    // Check if the session cookie is present
+    if (sessionCookie == null) {
+      return Response.status(Response.Status.UNAUTHORIZED).build();
+    }
+    // Find the session by token
+    Session session = Session.findValid(sessionCookie.getValue());
+    if (session == null) {
+      return Response.status(Response.Status.UNAUTHORIZED).build();
+    }
+    // Only admins may change another user's role
+    if (!session.user.hasRole(User.Role.admin)) {
+      return Response.status(Response.Status.FORBIDDEN).build();
+    }
+
+    if (updateRoleDto.getRole() == null) {
+      return Response.status(Response.Status.BAD_REQUEST)
+          .entity(new MessageDto("Role is required"))
+          .build();
+    }
+
+    User targetUser = User.findById(id);
+    if (targetUser == null) {
+      return Response.status(Response.Status.NOT_FOUND)
+          .entity(new MessageDto("User not found"))
+          .build();
+    }
+
+    targetUser.setRole(updateRoleDto.getRole());
+    targetUser.persist();
+
+    logger.info("Updated role for user: {}", targetUser.getUsername());
+    return Response.ok(
+            new MessageDto(
+                "Role updated to "
+                    + targetUser.getRole()
+                    + " for user "
+                    + targetUser.getUsername()))
+        .build();
+  }
+
   // Update the current user's profile
   @PUT
   @Path("/me")
