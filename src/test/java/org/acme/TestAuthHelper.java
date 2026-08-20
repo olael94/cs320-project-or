@@ -85,6 +85,25 @@ public class TestAuthHelper {
             });
   }
 
+  /**
+   * Directly sets a user's role, bypassing the app - there's no self-service way to become an
+   * admin.
+   */
+  public static void setUserRole(String email, User.Role role) {
+    QuarkusTransaction.requiringNew()
+        .run(
+            () -> {
+              User user = User.find("email", email).firstResult();
+              user.setRole(role);
+              user.persist();
+            });
+  }
+
+  public static User.Role getUserRole(String email) {
+    return QuarkusTransaction.requiringNew()
+        .call(() -> User.find("email", email).<User>firstResult().getRole());
+  }
+
   public static Instant getSessionExpiresAt(String sessionToken) {
     return QuarkusTransaction.requiringNew()
         .call(() -> Session.find("token", sessionToken).<Session>firstResult().expiresAt);

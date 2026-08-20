@@ -8,6 +8,7 @@ import static org.hamcrest.Matchers.notNullValue;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.response.Response;
 import org.acme.TestAuthHelper;
+import org.acme.entity.User;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
@@ -46,6 +47,26 @@ class UserControllerTest {
       TestAuthHelper.register(email, TestAuthHelper.PASSWORD).then().statusCode(201);
 
       TestAuthHelper.register(email, TestAuthHelper.PASSWORD).then().statusCode(409);
+    }
+
+    @Test
+    void register_ignoresClientSuppliedRole_defaultsToCustomer() {
+      String email = TestAuthHelper.uniqueEmail();
+
+      given()
+          .contentType("application/json")
+          .body(
+              "{\"username\":\"testuser\",\"email\":\""
+                  + email
+                  + "\",\"password\":\""
+                  + TestAuthHelper.PASSWORD
+                  + "\",\"role\":\"admin\"}")
+          .post("/api/users/register")
+          .then()
+          .statusCode(201);
+
+      org.junit.jupiter.api.Assertions.assertEquals(
+          User.Role.customer, TestAuthHelper.getUserRole(email));
     }
   }
 
@@ -321,6 +342,108 @@ class UserControllerTest {
     @Test
     void deleteCurrentUser_noSession_returns401() {
       given().delete("/api/users/me").then().statusCode(401);
+    }
+  }
+
+  @Nested
+  class UpdateRole {
+
+    @Test
+    void updateUserRole_asAdmin_success_changesRole() {
+      AuthenticatedUser admin = TestAuthHelper.registerAndLogin();
+      TestAuthHelper.setUserRole(admin.email(), User.Role.admin);
+
+      AuthenticatedUser target = TestAuthHelper.registerAndLogin();
+      long targetId =
+          given()
+              .cookie("session", target.sessionCookie())
+              .get("/api/users/me")
+              .jsonPath()
+              .getLong("id");
+
+      given()
+          .cookie("session", admin.sessionCookie())
+          .header("X-CSRF-Token", admin.csrfToken())
+          .contentType("application/json")
+          .body("{\"role\":\"vendor\"}")
+          .put("/api/users/" + targetId + "/role")
+          .then()
+          .statusCode(200)
+          .body("message", equalTo("Role updated to vendor for user testuser"));
+    }
+
+    @Test
+    void updateUserRole_nonAdmin_returns403() {
+      AuthenticatedUser nonAdmin = TestAuthHelper.registerAndLogin();
+      AuthenticatedUser target = TestAuthHelper.registerAndLogin();
+      long targetId =
+          given()
+              .cookie("session", target.sessionCookie())
+              .get("/api/users/me")
+              .jsonPath()
+              .getLong("id");
+
+      given()
+          .cookie("session", nonAdmin.sessionCookie())
+          .header("X-CSRF-Token", nonAdmin.csrfToken())
+          .contentType("application/json")
+          .body("{\"role\":\"admin\"}")
+          .put("/api/users/" + targetId + "/role")
+          .then()
+          .statusCode(403);
+    }
+
+    @Test
+    void updateUserRole_noSession_returns401() {
+      given()
+          .contentType("application/json")
+          .body("{\"role\":\"admin\"}")
+          .put("/api/users/1/role")
+          .then()
+          .statusCode(401);
+    }
+
+    @Test
+    void updateUserRole_missingRole_returns400() {
+      AuthenticatedUser admin = TestAuthHelper.registerAndLogin();
+      TestAuthHelper.setUserRole(admin.email(), User.Role.admin);
+      long adminId =
+          given()
+              .cookie("session", admin.sessionCookie())
+              .get("/api/users/me")
+              .jsonPath()
+              .getLong("id");
+
+      given()
+          .cookie("session", admin.sessionCookie())
+          .header("X-CSRF-Token", admin.csrfToken())
+          .contentType("application/json")
+          .body("{}")
+          .put("/api/users/" + adminId + "/role")
+          .then()
+          .statusCode(400)
+          .body("message", equalTo("Role is required"));
+    }
+
+    @Test
+    void updateUserRole_invalidRoleValue_returns400() {
+      AuthenticatedUser admin = TestAuthHelper.registerAndLogin();
+      TestAuthHelper.setUserRole(admin.email(), User.Role.admin);
+      long adminId =
+          given()
+              .cookie("session", admin.sessionCookie())
+              .get("/api/users/me")
+              .jsonPath()
+              .getLong("id");
+
+      given()
+          .cookie("session", admin.sessionCookie())
+          .header("X-CSRF-Token", admin.csrfToken())
+          .contentType("application/json")
+          .body("{\"role\":\"superadmin\"}")
+          .put("/api/users/" + adminId + "/role")
+          .then()
+          .statusCode(400);
     }
   }
 

@@ -50,28 +50,34 @@ public class UserController {
   @Path("/register")
   @Consumes(MediaType.APPLICATION_JSON)
   @Transactional
-  public Response createUser(User user) {
-    logger.info("Creating user: {}", user.getUsername());
+  public Response createUser(RegisterDto registerDto) {
+    logger.info("Creating user: {}", registerDto.getUsername());
 
     // Check if username, email, or password is empty
-    if ((user.getUsername() == null || user.getUsername().isEmpty())
-        || (user.getEmail() == null || user.getEmail().isEmpty())
-        || (user.getPassword() == null || user.getPassword().isEmpty())) {
+    if ((registerDto.getUsername() == null || registerDto.getUsername().isEmpty())
+        || (registerDto.getEmail() == null || registerDto.getEmail().isEmpty())
+        || (registerDto.getPassword() == null || registerDto.getPassword().isEmpty())) {
       return Response.status(Response.Status.BAD_REQUEST)
           .entity(new MessageDto("Username, email, and password are required"))
           .build();
     }
 
     // Check if a user with the same email already exists
-    User existingUser = User.find("email", user.getEmail()).firstResult();
+    User existingUser = User.find("email", registerDto.getEmail()).firstResult();
     if (existingUser != null) {
       return Response.status(Response.Status.CONFLICT)
           .entity(new MessageDto("Email is already in use"))
           .build();
     }
 
-    // The password is already hashed at this point: Jackson called setPassword() while
-    // deserializing the request body, which hashes it in User.setPassword().
+    // Built field-by-field from the DTO, not bound directly from the request
+    // body - a client has no way to set id, role, lockedUntil, or
+    // failedLoginAttempts at registration.
+    User user = new User();
+    user.setUsername(registerDto.getUsername());
+    user.setEmail(registerDto.getEmail());
+    user.setPassword(registerDto.getPassword()); // hashed internally in setPassword()
+    user.setRole(User.Role.customer);
     user.persist();
 
     logger.info("Created user: {}", user.getUsername());
@@ -252,6 +258,55 @@ public class UserController {
 
     logger.info("Fetching user with ID {}", id);
     return Response.ok(new UserDto(session.user)).build();
+  }
+
+  // Change user's role (Admin Only)
+  @PUT
+  @Path("{id}/role")
+  @Consumes(MediaType.APPLICATION_JSON)
+  @Transactional
+  public Response updateUserRole(
+      @PathParam("id") Long id,
+      @CookieParam("session") Cookie sessionCookie,
+      UpdateRoleDto updateRoleDto) {
+    // Check if the session cookie is present
+    if (sessionCookie == null) {
+      return Response.status(Response.Status.UNAUTHORIZED).build();
+    }
+    // Find the session by token
+    Session session = Session.findValid(sessionCookie.getValue());
+    if (session == null) {
+      return Response.status(Response.Status.UNAUTHORIZED).build();
+    }
+    // Only admins may change another user's role
+    if (!session.user.hasRole(User.Role.admin)) {
+      return Response.status(Response.Status.FORBIDDEN).build();
+    }
+
+    if (updateRoleDto.getRole() == null) {
+      return Response.status(Response.Status.BAD_REQUEST)
+          .entity(new MessageDto("Role is required"))
+          .build();
+    }
+
+    User targetUser = User.findById(id);
+    if (targetUser == null) {
+      return Response.status(Response.Status.NOT_FOUND)
+          .entity(new MessageDto("User not found"))
+          .build();
+    }
+
+    targetUser.setRole(updateRoleDto.getRole());
+    targetUser.persist();
+
+    logger.info("Updated role for user: {}", targetUser.getUsername());
+    return Response.ok(
+            new MessageDto(
+                "Role updated to "
+                    + targetUser.getRole()
+                    + " for user "
+                    + targetUser.getUsername()))
+        .build();
   }
 
   // Update the current user's profile

@@ -30,6 +30,7 @@ public class User extends PanacheEntity {
     customer,
     admin,
     vendor,
+    support
   }
 
   @Column(nullable = false)
@@ -87,6 +88,17 @@ public class User extends PanacheEntity {
 
   public boolean checkPassword(String password) {
     return BCrypt.checkpw(password, this.password);
+  }
+
+  // Method to check if the user has a specific role
+  public boolean hasRole(
+      Role... roles) { // Role... means that roles can be passed as multiple arguments
+    for (Role role : roles) {
+      if (this.role == role) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public void setRole(Role role) {
