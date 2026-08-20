@@ -99,6 +99,11 @@ public class TestAuthHelper {
             });
   }
 
+  public static User.Role getUserRole(String email) {
+    return QuarkusTransaction.requiringNew()
+        .call(() -> User.find("email", email).<User>firstResult().getRole());
+  }
+
   public static Instant getSessionExpiresAt(String sessionToken) {
     return QuarkusTransaction.requiringNew()
         .call(() -> Session.find("token", sessionToken).<Session>firstResult().expiresAt);

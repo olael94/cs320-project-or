@@ -48,6 +48,26 @@ class UserControllerTest {
 
       TestAuthHelper.register(email, TestAuthHelper.PASSWORD).then().statusCode(409);
     }
+
+    @Test
+    void register_ignoresClientSuppliedRole_defaultsToCustomer() {
+      String email = TestAuthHelper.uniqueEmail();
+
+      given()
+          .contentType("application/json")
+          .body(
+              "{\"username\":\"testuser\",\"email\":\""
+                  + email
+                  + "\",\"password\":\""
+                  + TestAuthHelper.PASSWORD
+                  + "\",\"role\":\"admin\"}")
+          .post("/api/users/register")
+          .then()
+          .statusCode(201);
+
+      org.junit.jupiter.api.Assertions.assertEquals(
+          User.Role.customer, TestAuthHelper.getUserRole(email));
+    }
   }
 
   @Nested
