@@ -2,10 +2,12 @@ package org.acme.controller;
 
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.Cookie;
 import jakarta.ws.rs.core.Response;
 import java.time.LocalDateTime;
 import org.acme.dto.MessageDto;
 import org.acme.entity.Order;
+import org.acme.entity.Session;
 import org.acme.entity.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,17 +76,41 @@ public class OrderController {
   // Get a specific USER order by ID
   @GET
   @Path("{id}")
-  public Response getOrder(@PathParam("id") Long id) {
+  public Response getOrder(@PathParam("id") Long id, @CookieParam("session") Cookie sessionCookie) {
     logger.info("Fetching order for ID: {}", id);
+
+    if (sessionCookie == null) {
+      return Response.status(Response.Status.UNAUTHORIZED).build();
+    }
+
+    Session session = Session.findValid(sessionCookie.getValue());
+    if (session == null) {
+      return Response.status(Response.Status.UNAUTHORIZED).build();
+    }
 
     Order order = Order.findById(id);
     if (order == null) {
       logger.warn("Order not found for ID: {}", id);
-
       return Response.status(Response.Status.NOT_FOUND)
           .entity(new MessageDto("Order not found")) // User will see this message
           .build();
     }
+
+    boolean isOwner = false;
+    if (order.getUser() != null) {
+      Long orderOwnerId = order.getUser().id;
+      if (orderOwnerId.equals(session.user.id)) {
+        isOwner = true;
+      }
+    }
+
+    boolean isAdmin = session.user.hasRole(User.Role.ADMIN);
+    boolean allowedToViewThisOrder = isOwner || isAdmin;
+
+    if (!allowedToViewThisOrder) {
+      return Response.status(Response.Status.FORBIDDEN).build();
+    }
+
     logger.info("Order found for ID: {}", id);
     // User will see this message
     String message = "Order found for ID: " + order.id;
@@ -95,8 +121,24 @@ public class OrderController {
   @PUT
   @Path("{id}")
   @Transactional
-  public Response updateOrder(@PathParam("id") Long id, Order updatedOrder) {
+  public Response updateOrder(
+      @PathParam("id") Long id, @CookieParam("session") Cookie sessionCookie, Order updatedOrder) {
     logger.info("Updating order with ID: {}", id);
+
+    if (sessionCookie == null) {
+      return Response.status(Response.Status.UNAUTHORIZED).build();
+    }
+
+    // Find the session by token
+    Session session = Session.findValid(sessionCookie.getValue());
+    if (session == null) {
+      return Response.status(Response.Status.UNAUTHORIZED).build();
+    }
+
+    // Only admins may update another user's order'
+    if (!session.user.hasRole(User.Role.ADMIN)) {
+      return Response.status(Response.Status.FORBIDDEN).build();
+    }
 
     Order existingOrder = Order.findById(id);
     if (existingOrder == null) {
@@ -162,15 +204,30 @@ public class OrderController {
     String message =
         "Guest order updated successfully for guestTrackingId: "
             + existingGuestOrder.getGuestTrackingId();
-    return Response.ok(existingGuestOrder).build();
+    return Response.ok(new MessageDto(message)).build();
   }
 
   // Delete an order by ID
   @DELETE
   @Path("{id}")
   @Transactional
-  public Response deleteOrder(@PathParam("id") Long id) {
+  public Response deleteOrder(
+      @PathParam("id") Long id, @CookieParam("session") Cookie sessionCookie) {
     logger.info("Deleting order with ID: {}", id);
+
+    if (sessionCookie == null) {
+      return Response.status(Response.Status.UNAUTHORIZED).build();
+    }
+
+    Session session = Session.findValid(sessionCookie.getValue());
+    if (session == null) {
+      return Response.status(Response.Status.UNAUTHORIZED).build();
+    }
+
+    // Only admins may delete another user's order'
+    if (!session.user.hasRole(User.Role.ADMIN)) {
+      return Response.status(Response.Status.FORBIDDEN).build();
+    }
 
     Order order = Order.findById(id);
     if (order == null) {
