@@ -21,6 +21,7 @@ import org.acme.dto.*;
 import org.acme.entity.PasswordResetToken;
 import org.acme.entity.Session;
 import org.acme.entity.User;
+import org.acme.util.CookieBuilder;
 import org.acme.util.SessionAuth;
 import org.acme.util.TokenGenerator;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -182,25 +183,8 @@ public class UserController {
       Session.delete("token", sessionCookie.getValue());
     }
 
-    NewCookie expiredSessionCookie =
-        new NewCookie.Builder("session")
-            .value("")
-            .path("/")
-            .httpOnly(true)
-            .secure(cookieSecure)
-            .sameSite(NewCookie.SameSite.LAX)
-            .maxAge(0) // Expire the cookie immediately
-            .build();
-
-    NewCookie expiredCsrf =
-        new NewCookie.Builder("csrf_token")
-            .value("")
-            .path("/")
-            .httpOnly(false)
-            .secure(cookieSecure)
-            .sameSite(NewCookie.SameSite.LAX)
-            .maxAge(0) // Expire the cookie immediately
-            .build();
+    NewCookie expiredSessionCookie = CookieBuilder.expiredSessionCookie(cookieSecure);
+    NewCookie expiredCsrf = CookieBuilder.expiredCsrfCookie(cookieSecure);
     // If the logout is successful, a 200 (OK) status code is returned along with the expired
     // session and CSRF cookies.
     return Response.ok().cookie(expiredSessionCookie, expiredCsrf).build();
@@ -488,24 +472,8 @@ public class UserController {
 
     logger.info("Deleted account for user: {}", user.getUsername());
 
-    NewCookie expiredSessionCookie =
-        new NewCookie.Builder("session")
-            .value("")
-            .path("/")
-            .httpOnly(true)
-            .secure(cookieSecure)
-            .sameSite(NewCookie.SameSite.LAX)
-            .maxAge(0) // Expire the cookie immediately
-            .build();
-    NewCookie expiredCsrf =
-        new NewCookie.Builder("csrf_token")
-            .value("")
-            .path("/")
-            .httpOnly(false)
-            .secure(cookieSecure)
-            .sameSite(NewCookie.SameSite.LAX)
-            .maxAge(0) // Expire the cookie immediately
-            .build();
+    NewCookie expiredSessionCookie = CookieBuilder.expiredSessionCookie(cookieSecure);
+    NewCookie expiredCsrf = CookieBuilder.expiredCsrfCookie(cookieSecure);
 
     return Response.ok(new MessageDto("Account deleted successfully."))
         .cookie(expiredSessionCookie, expiredCsrf)
