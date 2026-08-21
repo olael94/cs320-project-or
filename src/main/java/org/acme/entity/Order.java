@@ -20,6 +20,7 @@ public class Order extends PanacheEntity {
   private Double totalAmount;
 
   @Enumerated(EnumType.STRING)
+  @Column(columnDefinition = "VARCHAR(20)")
   private Status status;
 
   @Column(nullable = true) // GUEST ORDERS Store guest email for guest orders

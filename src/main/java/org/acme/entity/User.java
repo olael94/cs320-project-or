@@ -24,6 +24,7 @@ public class User extends PanacheEntity {
   private String password;
 
   @Enumerated(EnumType.STRING)
+  @Column(columnDefinition = "VARCHAR(20)")
   private Role role;
 
   public enum Role {
