@@ -39,7 +39,7 @@ public class User extends PanacheEntity {
 
   private Instant lockedUntil;
 
-  @Column(nullable = false)
+  @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT TRUE")
   private boolean active = true;
 
   // Getters
