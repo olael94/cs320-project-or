@@ -233,6 +233,11 @@ public class UserController {
       return Response.status(Response.Status.UNAUTHORIZED).build();
     }
 
+    // Only admins can view all users
+    if (!session.user.hasRole(User.Role.ADMIN)) {
+      return Response.status(Response.Status.FORBIDDEN).build();
+    }
+
     logger.info("Fetching all users");
     List<User> users = User.listAll();
     return Response.ok(users.stream().map(UserDto::new).collect(Collectors.toList())).build();

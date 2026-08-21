@@ -189,10 +189,18 @@ class UserControllerTest {
     }
 
     @Test
-    void getAllUsers_withSession_returns200() {
+    void getAllUsers_asAdmin_returns200() {
+      AuthenticatedUser admin = TestAuthHelper.registerAndLogin();
+      TestAuthHelper.setUserRole(admin.email(), User.Role.ADMIN);
+
+      given().cookie("session", admin.sessionCookie()).get("/api/users").then().statusCode(200);
+    }
+
+    @Test
+    void getAllUsers_nonAdmin_returns403() {
       AuthenticatedUser user = TestAuthHelper.registerAndLogin();
 
-      given().cookie("session", user.sessionCookie()).get("/api/users").then().statusCode(200);
+      given().cookie("session", user.sessionCookie()).get("/api/users").then().statusCode(403);
     }
 
     @Test
