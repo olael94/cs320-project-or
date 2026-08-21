@@ -433,6 +433,29 @@ public class UserController {
     return Response.ok(new MessageDto("Password changed successfully.")).build();
   }
 
+  // Helper method to send a password reset email
+  private void sendPasswordResetEmail(User user, String introText) {
+    // Invalidate any previous unused reset tokens for this user, so only
+    // the newest link is ever valid.
+    PasswordResetToken.update("used = true where user = ?1 and used = false", user);
+
+    PasswordResetToken resetToken = new PasswordResetToken();
+    resetToken.user = user;
+    resetToken.token = TokenGenerator.generate();
+    resetToken.expiresAt = Instant.now().plus(1, ChronoUnit.HOURS);
+    resetToken.persist();
+
+    String resetLink = baseUrl + "/reset-password?token=" + resetToken.token;
+    mailer.send(
+        Mail.withText(
+            user.getEmail(),
+            "Reset your password",
+            introText
+                + "Click the link below to reset your password. This link expires in 1 hour.\n\n"
+                + resetLink));
+    logger.info("Password reset email sent to: {}", user.getEmail());
+  }
+
   // Reset a user's password with an email
   @POST
   @Path("/reset-password/request")
@@ -451,29 +474,41 @@ public class UserController {
     // Find the user by email
     User user = User.find("email", requestDto.getEmail()).firstResult();
     if (user != null) {
-      // Invalidate any previous unused reset tokens for this user, so only
-      // the newest link is ever valid.
-      PasswordResetToken.update("used = true where user = ?1 and used = false", user);
-
-      PasswordResetToken resetToken = new PasswordResetToken();
-      resetToken.user = user;
-      resetToken.token = TokenGenerator.generate();
-      resetToken.expiresAt = Instant.now().plus(1, ChronoUnit.HOURS);
-      resetToken.persist();
-
-      String resetLink = baseUrl + "/reset-password?token=" + resetToken.token;
-      mailer.send(
-          Mail.withText(
-              user.getEmail(),
-              "Reset your password",
-              "Click the link below to reset your password. This link expires in 1 hour.\n\n"
-                  + resetLink));
-      logger.info("Password reset email sent to: {}", user.getEmail());
+      sendPasswordResetEmail(user, "");
     }
 
     // Always the same response, whether or not that email has an account -
     // otherwise this endpoint could be used to check which emails are registered.
     return Response.ok(new MessageDto("If that email is registered, a reset link has been sent."))
+        .build();
+  }
+
+  // Trigger a password reset for a user on their behalf (admin only)
+  @POST
+  @Path("{id}/reset-password")
+  @Transactional
+  public Response adminRequestPasswordReset(
+      @PathParam("id") Long id, @CookieParam("session") Cookie sessionCookie) {
+    Session session = SessionAuth.requireValidSession(sessionCookie);
+    if (session == null) {
+      return Response.status(Response.Status.UNAUTHORIZED).build();
+    }
+    Response forbidden = SessionAuth.requireRole(session, User.Role.ADMIN);
+    if (forbidden != null) {
+      return forbidden;
+    }
+
+    User targetUser = User.findById(id);
+    if (targetUser == null) {
+      return Response.status(Response.Status.NOT_FOUND)
+          .entity(new MessageDto("User not found"))
+          .build();
+    }
+
+    sendPasswordResetEmail(
+        targetUser, "An administrator has triggered a password reset for your account. ");
+
+    return Response.ok(new MessageDto("Password reset email sent to " + targetUser.getEmail()))
         .build();
   }
 

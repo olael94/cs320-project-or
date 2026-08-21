@@ -670,6 +670,87 @@ class UserControllerTest {
   }
 
   @Nested
+  class AdminPasswordReset {
+
+    @Test
+    void adminRequestPasswordReset_asAdmin_success_targetCanCompleteReset() {
+      AuthenticatedUser admin = TestAuthHelper.registerAndLogin();
+      TestAuthHelper.setUserRole(admin.email(), User.Role.ADMIN);
+
+      AuthenticatedUser target = TestAuthHelper.registerAndLogin();
+      long targetId =
+          given()
+              .cookie("session", target.sessionCookie())
+              .get("/api/users/me")
+              .jsonPath()
+              .getLong("id");
+
+      given()
+          .cookie("session", admin.sessionCookie())
+          .header("X-CSRF-Token", admin.csrfToken())
+          .post("/api/users/" + targetId + "/reset-password")
+          .then()
+          .statusCode(200);
+
+      // The triggered reset must produce a real, usable token, not just a
+      // 200 response - complete the flow end to end.
+      String token = TestAuthHelper.getLatestResetTokenFor(target.email());
+      given()
+          .contentType("application/json")
+          .body("{\"token\":\"" + token + "\",\"newPassword\":\"newpassword456\"}")
+          .post("/api/users/reset-password/confirm")
+          .then()
+          .statusCode(200);
+
+      TestAuthHelper.login(target.email(), "newpassword456").then().statusCode(200);
+    }
+
+    @Test
+    void adminRequestPasswordReset_nonAdmin_returns403() {
+      AuthenticatedUser nonAdmin = TestAuthHelper.registerAndLogin();
+      AuthenticatedUser target = TestAuthHelper.registerAndLogin();
+      long targetId =
+          given()
+              .cookie("session", target.sessionCookie())
+              .get("/api/users/me")
+              .jsonPath()
+              .getLong("id");
+
+      given()
+          .cookie("session", nonAdmin.sessionCookie())
+          .header("X-CSRF-Token", nonAdmin.csrfToken())
+          .post("/api/users/" + targetId + "/reset-password")
+          .then()
+          .statusCode(403);
+    }
+
+    @Test
+    void adminRequestPasswordReset_noSession_returns401() {
+      given().post("/api/users/1/reset-password").then().statusCode(401);
+    }
+
+    @Test
+    void adminRequestPasswordReset_targetNotFound_returns404() {
+      AuthenticatedUser admin = TestAuthHelper.registerAndLogin();
+      TestAuthHelper.setUserRole(admin.email(), User.Role.ADMIN);
+      long adminId =
+          given()
+              .cookie("session", admin.sessionCookie())
+              .get("/api/users/me")
+              .jsonPath()
+              .getLong("id");
+      long nonexistentId = adminId + 1_000_000L;
+
+      given()
+          .cookie("session", admin.sessionCookie())
+          .header("X-CSRF-Token", admin.csrfToken())
+          .post("/api/users/" + nonexistentId + "/reset-password")
+          .then()
+          .statusCode(404);
+    }
+  }
+
+  @Nested
   class PasswordReset {
 
     private static final String GENERIC_MESSAGE =
