@@ -5,7 +5,10 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Cookie;
 import jakarta.ws.rs.core.Response;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import org.acme.dto.MessageDto;
+import org.acme.dto.OrderDto;
 import org.acme.entity.Order;
 import org.acme.entity.Session;
 import org.acme.entity.User;
@@ -52,6 +55,35 @@ public class OrderController {
     logger.info("Order created successfully with tracking info: {}", trackingInfo);
 
     return Response.status(Response.Status.CREATED).entity(new MessageDto(trackingInfo)).build();
+  }
+
+  // Get all orders (admin only)
+  @GET
+  public Response getAllOrders(@CookieParam("session") Cookie sessionCookie) {
+    logger.info("Fetching all orders");
+
+    if (sessionCookie == null) {
+      return Response.status(Response.Status.UNAUTHORIZED).build();
+    }
+
+    Session session = Session.findValid(sessionCookie.getValue());
+    if (session == null) {
+      return Response.status(Response.Status.UNAUTHORIZED).build();
+    }
+
+    // Only admins may view all orders
+    if (!session.user.hasRole(User.Role.ADMIN)) {
+      return Response.status(Response.Status.FORBIDDEN).build();
+    }
+
+    logger.info("All orders fetched successfully");
+    List<Order> orders = Order.listAll();
+    List<OrderDto> orderDtos = new ArrayList<>();
+    for (Order order : orders) {
+      orderDtos.add(new OrderDto(order));
+    }
+
+    return Response.ok(orderDtos).build();
   }
 
   // Get GUEST order by guestTrackingId

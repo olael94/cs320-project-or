@@ -29,7 +29,7 @@ public class Order extends PanacheEntity {
   @Column(nullable = true, unique = true) // GUEST ORDERS Unique guest tracking ID
   private String guestTrackingId;
 
-  private enum Status {
+  public enum Status {
     PENDING,
     COMPLETED,
     CANCELED,
