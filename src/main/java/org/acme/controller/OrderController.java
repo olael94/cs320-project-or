@@ -12,6 +12,7 @@ import org.acme.dto.OrderDto;
 import org.acme.entity.Order;
 import org.acme.entity.Session;
 import org.acme.entity.User;
+import org.acme.util.SessionAuth;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,18 +63,14 @@ public class OrderController {
   public Response getAllOrders(@CookieParam("session") Cookie sessionCookie) {
     logger.info("Fetching all orders");
 
-    if (sessionCookie == null) {
-      return Response.status(Response.Status.UNAUTHORIZED).build();
-    }
-
-    Session session = Session.findValid(sessionCookie.getValue());
+    Session session = SessionAuth.requireValidSession(sessionCookie);
     if (session == null) {
       return Response.status(Response.Status.UNAUTHORIZED).build();
     }
 
-    // Only admins may view all orders
-    if (!session.user.hasRole(User.Role.ADMIN)) {
-      return Response.status(Response.Status.FORBIDDEN).build();
+    Response forbidden = SessionAuth.requireRole(session, User.Role.ADMIN);
+    if (forbidden != null) {
+      return forbidden;
     }
 
     logger.info("All orders fetched successfully");
@@ -111,11 +108,7 @@ public class OrderController {
   public Response getOrder(@PathParam("id") Long id, @CookieParam("session") Cookie sessionCookie) {
     logger.info("Fetching order for ID: {}", id);
 
-    if (sessionCookie == null) {
-      return Response.status(Response.Status.UNAUTHORIZED).build();
-    }
-
-    Session session = Session.findValid(sessionCookie.getValue());
+    Session session = SessionAuth.requireValidSession(sessionCookie);
     if (session == null) {
       return Response.status(Response.Status.UNAUTHORIZED).build();
     }
@@ -157,19 +150,14 @@ public class OrderController {
       @PathParam("id") Long id, @CookieParam("session") Cookie sessionCookie, Order updatedOrder) {
     logger.info("Updating order with ID: {}", id);
 
-    if (sessionCookie == null) {
-      return Response.status(Response.Status.UNAUTHORIZED).build();
-    }
-
-    // Find the session by token
-    Session session = Session.findValid(sessionCookie.getValue());
+    Session session = SessionAuth.requireValidSession(sessionCookie);
     if (session == null) {
       return Response.status(Response.Status.UNAUTHORIZED).build();
     }
 
-    // Only admins may update another user's order'
-    if (!session.user.hasRole(User.Role.ADMIN)) {
-      return Response.status(Response.Status.FORBIDDEN).build();
+    Response forbidden = SessionAuth.requireRole(session, User.Role.ADMIN);
+    if (forbidden != null) {
+      return forbidden;
     }
 
     Order existingOrder = Order.findById(id);
@@ -247,18 +235,14 @@ public class OrderController {
       @PathParam("id") Long id, @CookieParam("session") Cookie sessionCookie) {
     logger.info("Deleting order with ID: {}", id);
 
-    if (sessionCookie == null) {
-      return Response.status(Response.Status.UNAUTHORIZED).build();
-    }
-
-    Session session = Session.findValid(sessionCookie.getValue());
+    Session session = SessionAuth.requireValidSession(sessionCookie);
     if (session == null) {
       return Response.status(Response.Status.UNAUTHORIZED).build();
     }
 
-    // Only admins may delete another user's order'
-    if (!session.user.hasRole(User.Role.ADMIN)) {
-      return Response.status(Response.Status.FORBIDDEN).build();
+    Response forbidden = SessionAuth.requireRole(session, User.Role.ADMIN);
+    if (forbidden != null) {
+      return forbidden;
     }
 
     Order order = Order.findById(id);

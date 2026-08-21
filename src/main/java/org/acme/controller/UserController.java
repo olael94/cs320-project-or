@@ -21,6 +21,7 @@ import org.acme.dto.*;
 import org.acme.entity.PasswordResetToken;
 import org.acme.entity.Session;
 import org.acme.entity.User;
+import org.acme.util.SessionAuth;
 import org.acme.util.TokenGenerator;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
@@ -208,12 +209,7 @@ public class UserController {
   @GET
   @Path("/me")
   public Response me(@CookieParam("session") Cookie sessionCookie) {
-    // Check if the session cookie is present
-    if (sessionCookie == null) {
-      return Response.status(Response.Status.UNAUTHORIZED).build();
-    }
-    // Find the session by token
-    Session session = Session.findValid(sessionCookie.getValue());
+    Session session = SessionAuth.requireValidSession(sessionCookie);
     if (session == null) {
       return Response.status(Response.Status.UNAUTHORIZED).build();
     }
@@ -223,19 +219,14 @@ public class UserController {
   // Get all users in the database.
   @GET
   public Response getAllUsers(@CookieParam("session") Cookie sessionCookie) {
-    // Check if the session cookie is present
-    if (sessionCookie == null) {
-      return Response.status(Response.Status.UNAUTHORIZED).build();
-    }
-    // Find the session by token
-    Session session = Session.findValid(sessionCookie.getValue());
+    Session session = SessionAuth.requireValidSession(sessionCookie);
     if (session == null) {
       return Response.status(Response.Status.UNAUTHORIZED).build();
     }
 
-    // Only admins can view all users
-    if (!session.user.hasRole(User.Role.ADMIN)) {
-      return Response.status(Response.Status.FORBIDDEN).build();
+    Response forbidden = SessionAuth.requireRole(session, User.Role.ADMIN);
+    if (forbidden != null) {
+      return forbidden;
     }
 
     logger.info("Fetching all users");
@@ -247,12 +238,7 @@ public class UserController {
   @GET
   @Path("{id}")
   public Response getUser(@PathParam("id") Long id, @CookieParam("session") Cookie sessionCookie) {
-    // Check if the session cookie is present
-    if (sessionCookie == null) {
-      return Response.status(Response.Status.UNAUTHORIZED).build();
-    }
-    // Find the session by token
-    Session session = Session.findValid(sessionCookie.getValue());
+    Session session = SessionAuth.requireValidSession(sessionCookie);
     if (session == null) {
       return Response.status(Response.Status.UNAUTHORIZED).build();
     }
@@ -274,18 +260,13 @@ public class UserController {
       @PathParam("id") Long id,
       @CookieParam("session") Cookie sessionCookie,
       UpdateRoleDto updateRoleDto) {
-    // Check if the session cookie is present
-    if (sessionCookie == null) {
-      return Response.status(Response.Status.UNAUTHORIZED).build();
-    }
-    // Find the session by token
-    Session session = Session.findValid(sessionCookie.getValue());
+    Session session = SessionAuth.requireValidSession(sessionCookie);
     if (session == null) {
       return Response.status(Response.Status.UNAUTHORIZED).build();
     }
-    // Only admins may change another user's role
-    if (!session.user.hasRole(User.Role.ADMIN)) {
-      return Response.status(Response.Status.FORBIDDEN).build();
+    Response forbidden = SessionAuth.requireRole(session, User.Role.ADMIN);
+    if (forbidden != null) {
+      return forbidden;
     }
 
     if (updateRoleDto.getRole() == null) {
@@ -321,13 +302,7 @@ public class UserController {
   @Transactional
   public Response updateCurrentUser(
       @CookieParam("session") Cookie sessionCookie, UpdateUserDto updateDto) {
-    // Check if the session cookie is present
-    if (sessionCookie == null) {
-      return Response.status(Response.Status.UNAUTHORIZED).build();
-    }
-
-    // Find the session by token
-    Session session = Session.findValid(sessionCookie.getValue());
+    Session session = SessionAuth.requireValidSession(sessionCookie);
     if (session == null) {
       return Response.status(Response.Status.UNAUTHORIZED).build();
     }
@@ -356,12 +331,7 @@ public class UserController {
   @Transactional
   public Response changePassword(
       @CookieParam("session") Cookie sessionCookie, ChangePasswordDto changeDto) {
-    // Check if the session cookie is present
-    if (sessionCookie == null) {
-      return Response.status(Response.Status.UNAUTHORIZED).build();
-    }
-    // Find the session by token
-    Session session = Session.findValid(sessionCookie.getValue());
+    Session session = SessionAuth.requireValidSession(sessionCookie);
     if (session == null) {
       return Response.status(Response.Status.UNAUTHORIZED).build();
     }
@@ -499,12 +469,7 @@ public class UserController {
   @Path("/me")
   @Transactional
   public Response deleteCurrentUser(@CookieParam("session") Cookie sessionCookie) {
-    // Check if the session cookie is present
-    if (sessionCookie == null) {
-      return Response.status(Response.Status.UNAUTHORIZED).build();
-    }
-    // Find the session by token
-    Session session = Session.findValid(sessionCookie.getValue());
+    Session session = SessionAuth.requireValidSession(sessionCookie);
     if (session == null) {
       return Response.status(Response.Status.UNAUTHORIZED).build();
     }
