@@ -113,6 +113,13 @@ public class UserController {
           .build();
     }
 
+    // Check if the user is active (not locked out)
+    if (user != null && !user.isActive()) {
+      return Response.status(Response.Status.UNAUTHORIZED)
+          .entity(new MessageDto("Invalid email or password"))
+          .build();
+    }
+
     if (user == null || !user.checkPassword(loginDto.getPassword())) {
       if (user != null) {
         user.setFailedLoginAttempts(user.getFailedLoginAttempts() + 1);

@@ -99,6 +99,17 @@ public class TestAuthHelper {
             });
   }
 
+  /** Directly deactivates a user, bypassing the app - there's no admin endpoint for this yet. */
+  public static void setUserActive(String email, boolean active) {
+    QuarkusTransaction.requiringNew()
+        .run(
+            () -> {
+              User user = User.find("email", email).firstResult();
+              user.setActive(active);
+              user.persist();
+            });
+  }
+
   public static User.Role getUserRole(String email) {
     return QuarkusTransaction.requiringNew()
         .call(() -> User.find("email", email).<User>firstResult().getRole());

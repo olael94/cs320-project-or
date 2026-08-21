@@ -131,6 +131,32 @@ class UserControllerTest {
           .statusCode(429)
           .body("message", notNullValue());
     }
+
+    @Test
+    void login_deactivatedAccount_returns401WithGenericMessage() {
+      String email = TestAuthHelper.uniqueEmail();
+      TestAuthHelper.register(email, TestAuthHelper.PASSWORD).then().statusCode(201);
+      TestAuthHelper.setUserActive(email, false);
+
+      TestAuthHelper.login(email, TestAuthHelper.PASSWORD)
+          .then()
+          .statusCode(401)
+          .body("message", equalTo("Invalid email or password"));
+    }
+
+    @Test
+    void login_deactivatedAccount_doesNotCountAsFailedAttempt() {
+      String email = TestAuthHelper.uniqueEmail();
+      TestAuthHelper.register(email, TestAuthHelper.PASSWORD).then().statusCode(201);
+      TestAuthHelper.setUserActive(email, false);
+
+      // Correct password, but deactivated - this must not be treated as a failed
+      // attempt, or a deactivated user could get locked out for no reason.
+      TestAuthHelper.login(email, TestAuthHelper.PASSWORD).then().statusCode(401);
+
+      TestAuthHelper.setUserActive(email, true);
+      TestAuthHelper.login(email, TestAuthHelper.PASSWORD).then().statusCode(200);
+    }
   }
 
   @Nested
