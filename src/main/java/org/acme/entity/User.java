@@ -39,6 +39,9 @@ public class User extends PanacheEntity {
 
   private Instant lockedUntil;
 
+  @Column(nullable = false)
+  private boolean active = true;
+
   // Getters
   public String getUsername() {
     return username;
@@ -64,6 +67,10 @@ public class User extends PanacheEntity {
     return lockedUntil;
   }
 
+  public boolean isActive() {
+    return active;
+  }
+
   // Setters
   public void setUsername(String username) {
     this.username = username;
@@ -79,12 +86,20 @@ public class User extends PanacheEntity {
     }
   }
 
+  public void setRole(Role role) {
+    this.role = role;
+  }
+
   public void setFailedLoginAttempts(int failedLoginAttempts) {
     this.failedLoginAttempts = failedLoginAttempts;
   }
 
   public void setLockedUntil(Instant lockedUntil) {
     this.lockedUntil = lockedUntil;
+  }
+
+  public void setActive(boolean active) {
+    this.active = active;
   }
 
   public boolean checkPassword(String password) {
@@ -100,10 +115,6 @@ public class User extends PanacheEntity {
       }
     }
     return false;
-  }
-
-  public void setRole(Role role) {
-    this.role = role;
   }
 
   // The toString method is used to convert the object to a string representation.

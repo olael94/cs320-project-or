@@ -12,11 +12,13 @@ public class UserDto {
   public String username;
   public String email;
   public User.Role role;
+  public boolean active;
 
   public UserDto(User user) {
     this.id = user.id;
     this.username = user.getUsername();
     this.email = user.getEmail();
     this.role = user.getRole();
+    this.active = user.isActive();
   }
 }

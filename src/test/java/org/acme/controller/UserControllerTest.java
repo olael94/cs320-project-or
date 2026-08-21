@@ -167,7 +167,8 @@ class UserControllerTest {
           .then()
           .statusCode(200)
           .body("email", equalTo(user.email()))
-          .body("role", equalTo("CUSTOMER"));
+          .body("role", equalTo("CUSTOMER"))
+          .body("active", equalTo(true));
     }
 
     @Test
