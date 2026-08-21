@@ -24,19 +24,23 @@ public class User extends PanacheEntity {
   private String password;
 
   @Enumerated(EnumType.STRING)
+  @Column(columnDefinition = "VARCHAR(20)")
   private Role role;
 
   public enum Role {
-    customer,
-    admin,
-    vendor,
-    support
+    CUSTOMER,
+    ADMIN,
+    VENDOR,
+    SUPPORT
   }
 
   @Column(nullable = false)
   private int failedLoginAttempts = 0;
 
   private Instant lockedUntil;
+
+  @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT TRUE")
+  private boolean active = true;
 
   // Getters
   public String getUsername() {
@@ -63,6 +67,10 @@ public class User extends PanacheEntity {
     return lockedUntil;
   }
 
+  public boolean isActive() {
+    return active;
+  }
+
   // Setters
   public void setUsername(String username) {
     this.username = username;
@@ -78,12 +86,20 @@ public class User extends PanacheEntity {
     }
   }
 
+  public void setRole(Role role) {
+    this.role = role;
+  }
+
   public void setFailedLoginAttempts(int failedLoginAttempts) {
     this.failedLoginAttempts = failedLoginAttempts;
   }
 
   public void setLockedUntil(Instant lockedUntil) {
     this.lockedUntil = lockedUntil;
+  }
+
+  public void setActive(boolean active) {
+    this.active = active;
   }
 
   public boolean checkPassword(String password) {
@@ -99,10 +115,6 @@ public class User extends PanacheEntity {
       }
     }
     return false;
-  }
-
-  public void setRole(Role role) {
-    this.role = role;
   }
 
   // The toString method is used to convert the object to a string representation.

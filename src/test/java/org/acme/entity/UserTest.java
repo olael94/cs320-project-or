@@ -10,39 +10,39 @@ class UserTest {
   @Test
   void hasRole_matchingSingleRole_returnsTrue() {
     User user = new User();
-    user.setRole(User.Role.admin);
+    user.setRole(User.Role.ADMIN);
 
-    assertTrue(user.hasRole(User.Role.admin));
+    assertTrue(user.hasRole(User.Role.ADMIN));
   }
 
   @Test
   void hasRole_nonMatchingSingleRole_returnsFalse() {
     User user = new User();
-    user.setRole(User.Role.customer);
+    user.setRole(User.Role.CUSTOMER);
 
-    assertFalse(user.hasRole(User.Role.admin));
+    assertFalse(user.hasRole(User.Role.ADMIN));
   }
 
   @Test
   void hasRole_matchesAnyOfMultipleRoles() {
     User user = new User();
-    user.setRole(User.Role.support);
+    user.setRole(User.Role.SUPPORT);
 
-    assertTrue(user.hasRole(User.Role.admin, User.Role.support));
+    assertTrue(user.hasRole(User.Role.ADMIN, User.Role.SUPPORT));
   }
 
   @Test
   void hasRole_matchesNoneOfMultipleRoles_returnsFalse() {
     User user = new User();
-    user.setRole(User.Role.customer);
+    user.setRole(User.Role.CUSTOMER);
 
-    assertFalse(user.hasRole(User.Role.admin, User.Role.support));
+    assertFalse(user.hasRole(User.Role.ADMIN, User.Role.SUPPORT));
   }
 
   @Test
   void hasRole_noRoleSet_returnsFalse() {
     User user = new User();
 
-    assertFalse(user.hasRole(User.Role.admin));
+    assertFalse(user.hasRole(User.Role.ADMIN));
   }
 }

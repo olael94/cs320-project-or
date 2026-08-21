@@ -20,6 +20,7 @@ public class Order extends PanacheEntity {
   private Double totalAmount;
 
   @Enumerated(EnumType.STRING)
+  @Column(columnDefinition = "VARCHAR(20)")
   private Status status;
 
   @Column(nullable = true) // GUEST ORDERS Store guest email for guest orders
@@ -28,11 +29,11 @@ public class Order extends PanacheEntity {
   @Column(nullable = true, unique = true) // GUEST ORDERS Unique guest tracking ID
   private String guestTrackingId;
 
-  private enum Status {
-    pending,
-    completed,
-    canceled,
-    refunded // Add other statuses as needed
+  public enum Status {
+    PENDING,
+    COMPLETED,
+    CANCELED,
+    REFUNDED // Add other statuses as needed
   }
 
   // Generate a guestTrackingId if the order is a guest order and doesn't have an existing one

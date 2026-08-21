@@ -21,6 +21,8 @@ import org.acme.dto.*;
 import org.acme.entity.PasswordResetToken;
 import org.acme.entity.Session;
 import org.acme.entity.User;
+import org.acme.util.CookieBuilder;
+import org.acme.util.SessionAuth;
 import org.acme.util.TokenGenerator;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
@@ -77,7 +79,7 @@ public class UserController {
     user.setUsername(registerDto.getUsername());
     user.setEmail(registerDto.getEmail());
     user.setPassword(registerDto.getPassword()); // hashed internally in setPassword()
-    user.setRole(User.Role.customer);
+    user.setRole(User.Role.CUSTOMER);
     user.persist();
 
     logger.info("Created user: {}", user.getUsername());
@@ -108,6 +110,14 @@ public class UserController {
         && user.getLockedUntil().isAfter(Instant.now())) {
       return Response.status(429)
           .entity(new MessageDto("Too many failed login attempts. Try again later."))
+          .build();
+    }
+
+    // A deactivated account (admin-controlled) is separate from a temporary
+    // lockout (failed-attempts-controlled, checked above).
+    if (user != null && !user.isActive()) {
+      return Response.status(Response.Status.UNAUTHORIZED)
+          .entity(new MessageDto("Invalid email or password"))
           .build();
     }
 
@@ -181,25 +191,8 @@ public class UserController {
       Session.delete("token", sessionCookie.getValue());
     }
 
-    NewCookie expiredSessionCookie =
-        new NewCookie.Builder("session")
-            .value("")
-            .path("/")
-            .httpOnly(true)
-            .secure(cookieSecure)
-            .sameSite(NewCookie.SameSite.LAX)
-            .maxAge(0) // Expire the cookie immediately
-            .build();
-
-    NewCookie expiredCsrf =
-        new NewCookie.Builder("csrf_token")
-            .value("")
-            .path("/")
-            .httpOnly(false)
-            .secure(cookieSecure)
-            .sameSite(NewCookie.SameSite.LAX)
-            .maxAge(0) // Expire the cookie immediately
-            .build();
+    NewCookie expiredSessionCookie = CookieBuilder.expiredSessionCookie(cookieSecure);
+    NewCookie expiredCsrf = CookieBuilder.expiredCsrfCookie(cookieSecure);
     // If the logout is successful, a 200 (OK) status code is returned along with the expired
     // session and CSRF cookies.
     return Response.ok().cookie(expiredSessionCookie, expiredCsrf).build();
@@ -208,12 +201,7 @@ public class UserController {
   @GET
   @Path("/me")
   public Response me(@CookieParam("session") Cookie sessionCookie) {
-    // Check if the session cookie is present
-    if (sessionCookie == null) {
-      return Response.status(Response.Status.UNAUTHORIZED).build();
-    }
-    // Find the session by token
-    Session session = Session.findValid(sessionCookie.getValue());
+    Session session = SessionAuth.requireValidSession(sessionCookie);
     if (session == null) {
       return Response.status(Response.Status.UNAUTHORIZED).build();
     }
@@ -223,14 +211,14 @@ public class UserController {
   // Get all users in the database.
   @GET
   public Response getAllUsers(@CookieParam("session") Cookie sessionCookie) {
-    // Check if the session cookie is present
-    if (sessionCookie == null) {
-      return Response.status(Response.Status.UNAUTHORIZED).build();
-    }
-    // Find the session by token
-    Session session = Session.findValid(sessionCookie.getValue());
+    Session session = SessionAuth.requireValidSession(sessionCookie);
     if (session == null) {
       return Response.status(Response.Status.UNAUTHORIZED).build();
+    }
+
+    Response forbidden = SessionAuth.requireRole(session, User.Role.ADMIN);
+    if (forbidden != null) {
+      return forbidden;
     }
 
     logger.info("Fetching all users");
@@ -242,12 +230,7 @@ public class UserController {
   @GET
   @Path("{id}")
   public Response getUser(@PathParam("id") Long id, @CookieParam("session") Cookie sessionCookie) {
-    // Check if the session cookie is present
-    if (sessionCookie == null) {
-      return Response.status(Response.Status.UNAUTHORIZED).build();
-    }
-    // Find the session by token
-    Session session = Session.findValid(sessionCookie.getValue());
+    Session session = SessionAuth.requireValidSession(sessionCookie);
     if (session == null) {
       return Response.status(Response.Status.UNAUTHORIZED).build();
     }
@@ -269,18 +252,13 @@ public class UserController {
       @PathParam("id") Long id,
       @CookieParam("session") Cookie sessionCookie,
       UpdateRoleDto updateRoleDto) {
-    // Check if the session cookie is present
-    if (sessionCookie == null) {
-      return Response.status(Response.Status.UNAUTHORIZED).build();
-    }
-    // Find the session by token
-    Session session = Session.findValid(sessionCookie.getValue());
+    Session session = SessionAuth.requireValidSession(sessionCookie);
     if (session == null) {
       return Response.status(Response.Status.UNAUTHORIZED).build();
     }
-    // Only admins may change another user's role
-    if (!session.user.hasRole(User.Role.admin)) {
-      return Response.status(Response.Status.FORBIDDEN).build();
+    Response forbidden = SessionAuth.requireRole(session, User.Role.ADMIN);
+    if (forbidden != null) {
+      return forbidden;
     }
 
     if (updateRoleDto.getRole() == null) {
@@ -309,6 +287,74 @@ public class UserController {
         .build();
   }
 
+  // Deactivate a user (admin only)
+  @POST
+  @Path("{id}/deactivate")
+  @Transactional
+  public Response deactivateUser(
+      @PathParam("id") Long id, @CookieParam("session") Cookie sessionCookie) {
+    Session session = SessionAuth.requireValidSession(sessionCookie);
+    if (session == null) {
+      return Response.status(Response.Status.UNAUTHORIZED).build();
+    }
+    Response forbidden = SessionAuth.requireRole(session, User.Role.ADMIN);
+    if (forbidden != null) {
+      return forbidden;
+    }
+
+    if (id.equals(session.user.id)) {
+      return Response.status(Response.Status.BAD_REQUEST)
+          .entity(new MessageDto("You cannot deactivate your own account"))
+          .build();
+    }
+
+    User targetUser = User.findById(id);
+    if (targetUser == null) {
+      return Response.status(Response.Status.NOT_FOUND)
+          .entity(new MessageDto("User not found"))
+          .build();
+    }
+
+    targetUser.setActive(false);
+    targetUser.persist();
+
+    // A deactivated account shouldn't stay logged in on any device it's
+    // currently signed into.
+    Session.delete("user", targetUser);
+
+    logger.info("Deactivated user: {}", targetUser.getUsername());
+    return Response.ok(new MessageDto("User " + targetUser.getUsername() + " deactivated")).build();
+  }
+
+  // Reactivate a user (admin only)
+  @POST
+  @Path("{id}/reactivate")
+  @Transactional
+  public Response reactivateUser(
+      @PathParam("id") Long id, @CookieParam("session") Cookie sessionCookie) {
+    Session session = SessionAuth.requireValidSession(sessionCookie);
+    if (session == null) {
+      return Response.status(Response.Status.UNAUTHORIZED).build();
+    }
+    Response forbidden = SessionAuth.requireRole(session, User.Role.ADMIN);
+    if (forbidden != null) {
+      return forbidden;
+    }
+
+    User targetUser = User.findById(id);
+    if (targetUser == null) {
+      return Response.status(Response.Status.NOT_FOUND)
+          .entity(new MessageDto("User not found"))
+          .build();
+    }
+
+    targetUser.setActive(true);
+    targetUser.persist();
+
+    logger.info("Reactivated user: {}", targetUser.getUsername());
+    return Response.ok(new MessageDto("User " + targetUser.getUsername() + " reactivated")).build();
+  }
+
   // Update the current user's profile
   @PUT
   @Path("/me")
@@ -316,13 +362,7 @@ public class UserController {
   @Transactional
   public Response updateCurrentUser(
       @CookieParam("session") Cookie sessionCookie, UpdateUserDto updateDto) {
-    // Check if the session cookie is present
-    if (sessionCookie == null) {
-      return Response.status(Response.Status.UNAUTHORIZED).build();
-    }
-
-    // Find the session by token
-    Session session = Session.findValid(sessionCookie.getValue());
+    Session session = SessionAuth.requireValidSession(sessionCookie);
     if (session == null) {
       return Response.status(Response.Status.UNAUTHORIZED).build();
     }
@@ -351,12 +391,7 @@ public class UserController {
   @Transactional
   public Response changePassword(
       @CookieParam("session") Cookie sessionCookie, ChangePasswordDto changeDto) {
-    // Check if the session cookie is present
-    if (sessionCookie == null) {
-      return Response.status(Response.Status.UNAUTHORIZED).build();
-    }
-    // Find the session by token
-    Session session = Session.findValid(sessionCookie.getValue());
+    Session session = SessionAuth.requireValidSession(sessionCookie);
     if (session == null) {
       return Response.status(Response.Status.UNAUTHORIZED).build();
     }
@@ -398,6 +433,29 @@ public class UserController {
     return Response.ok(new MessageDto("Password changed successfully.")).build();
   }
 
+  // Helper method to send a password reset email
+  private void sendPasswordResetEmail(User user, String introText) {
+    // Invalidate any previous unused reset tokens for this user, so only
+    // the newest link is ever valid.
+    PasswordResetToken.update("used = true where user = ?1 and used = false", user);
+
+    PasswordResetToken resetToken = new PasswordResetToken();
+    resetToken.user = user;
+    resetToken.token = TokenGenerator.generate();
+    resetToken.expiresAt = Instant.now().plus(1, ChronoUnit.HOURS);
+    resetToken.persist();
+
+    String resetLink = baseUrl + "/reset-password?token=" + resetToken.token;
+    mailer.send(
+        Mail.withText(
+            user.getEmail(),
+            "Reset your password",
+            introText
+                + "Click the link below to reset your password. This link expires in 1 hour.\n\n"
+                + resetLink));
+    logger.info("Password reset email sent to: {}", user.getEmail());
+  }
+
   // Reset a user's password with an email
   @POST
   @Path("/reset-password/request")
@@ -416,29 +474,41 @@ public class UserController {
     // Find the user by email
     User user = User.find("email", requestDto.getEmail()).firstResult();
     if (user != null) {
-      // Invalidate any previous unused reset tokens for this user, so only
-      // the newest link is ever valid.
-      PasswordResetToken.update("used = true where user = ?1 and used = false", user);
-
-      PasswordResetToken resetToken = new PasswordResetToken();
-      resetToken.user = user;
-      resetToken.token = TokenGenerator.generate();
-      resetToken.expiresAt = Instant.now().plus(1, ChronoUnit.HOURS);
-      resetToken.persist();
-
-      String resetLink = baseUrl + "/reset-password?token=" + resetToken.token;
-      mailer.send(
-          Mail.withText(
-              user.getEmail(),
-              "Reset your password",
-              "Click the link below to reset your password. This link expires in 1 hour.\n\n"
-                  + resetLink));
-      logger.info("Password reset email sent to: {}", user.getEmail());
+      sendPasswordResetEmail(user, "");
     }
 
     // Always the same response, whether or not that email has an account -
     // otherwise this endpoint could be used to check which emails are registered.
     return Response.ok(new MessageDto("If that email is registered, a reset link has been sent."))
+        .build();
+  }
+
+  // Trigger a password reset for a user on their behalf (admin only)
+  @POST
+  @Path("{id}/reset-password")
+  @Transactional
+  public Response adminRequestPasswordReset(
+      @PathParam("id") Long id, @CookieParam("session") Cookie sessionCookie) {
+    Session session = SessionAuth.requireValidSession(sessionCookie);
+    if (session == null) {
+      return Response.status(Response.Status.UNAUTHORIZED).build();
+    }
+    Response forbidden = SessionAuth.requireRole(session, User.Role.ADMIN);
+    if (forbidden != null) {
+      return forbidden;
+    }
+
+    User targetUser = User.findById(id);
+    if (targetUser == null) {
+      return Response.status(Response.Status.NOT_FOUND)
+          .entity(new MessageDto("User not found"))
+          .build();
+    }
+
+    sendPasswordResetEmail(
+        targetUser, "An administrator has triggered a password reset for your account. ");
+
+    return Response.ok(new MessageDto("Password reset email sent to " + targetUser.getEmail()))
         .build();
   }
 
@@ -494,12 +564,7 @@ public class UserController {
   @Path("/me")
   @Transactional
   public Response deleteCurrentUser(@CookieParam("session") Cookie sessionCookie) {
-    // Check if the session cookie is present
-    if (sessionCookie == null) {
-      return Response.status(Response.Status.UNAUTHORIZED).build();
-    }
-    // Find the session by token
-    Session session = Session.findValid(sessionCookie.getValue());
+    Session session = SessionAuth.requireValidSession(sessionCookie);
     if (session == null) {
       return Response.status(Response.Status.UNAUTHORIZED).build();
     }
@@ -518,24 +583,8 @@ public class UserController {
 
     logger.info("Deleted account for user: {}", user.getUsername());
 
-    NewCookie expiredSessionCookie =
-        new NewCookie.Builder("session")
-            .value("")
-            .path("/")
-            .httpOnly(true)
-            .secure(cookieSecure)
-            .sameSite(NewCookie.SameSite.LAX)
-            .maxAge(0) // Expire the cookie immediately
-            .build();
-    NewCookie expiredCsrf =
-        new NewCookie.Builder("csrf_token")
-            .value("")
-            .path("/")
-            .httpOnly(false)
-            .secure(cookieSecure)
-            .sameSite(NewCookie.SameSite.LAX)
-            .maxAge(0) // Expire the cookie immediately
-            .build();
+    NewCookie expiredSessionCookie = CookieBuilder.expiredSessionCookie(cookieSecure);
+    NewCookie expiredCsrf = CookieBuilder.expiredCsrfCookie(cookieSecure);
 
     return Response.ok(new MessageDto("Account deleted successfully."))
         .cookie(expiredSessionCookie, expiredCsrf)
