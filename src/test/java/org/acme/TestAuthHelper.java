@@ -5,7 +5,9 @@ import static io.restassured.RestAssured.given;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.restassured.response.Response;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.UUID;
+import org.acme.entity.Order;
 import org.acme.entity.PasswordResetToken;
 import org.acme.entity.Session;
 import org.acme.entity.User;
@@ -107,6 +109,36 @@ public class TestAuthHelper {
               User user = User.find("email", email).firstResult();
               user.setActive(active);
               user.persist();
+            });
+  }
+
+  /**
+   * Directly creates an order owned by the given user, bypassing the app - createOrder's response
+   * only gives back a tracking message, not a usable order id.
+   */
+  public static Long createOrderForUser(Long userId, double totalAmount) {
+    return QuarkusTransaction.requiringNew()
+        .call(
+            () -> {
+              Order order = new Order();
+              order.setUser(User.findById(userId));
+              order.setOrderDate(LocalDateTime.now());
+              order.setTotalAmount(totalAmount);
+              order.persist();
+              return order.id;
+            });
+  }
+
+  /** Directly creates a guest order (no owning user), same reasoning as createOrderForUser. */
+  public static Long createGuestOrder(double totalAmount) {
+    return QuarkusTransaction.requiringNew()
+        .call(
+            () -> {
+              Order order = new Order();
+              order.setOrderDate(LocalDateTime.now());
+              order.setTotalAmount(totalAmount);
+              order.persist();
+              return order.id;
             });
   }
 
