@@ -509,6 +509,167 @@ class UserControllerTest {
   }
 
   @Nested
+  class DeactivateReactivate {
+
+    @Test
+    void deactivateUser_asAdmin_success_killsTargetSessionAndBlocksLogin() {
+      AuthenticatedUser admin = TestAuthHelper.registerAndLogin();
+      TestAuthHelper.setUserRole(admin.email(), User.Role.ADMIN);
+
+      AuthenticatedUser target = TestAuthHelper.registerAndLogin();
+      long targetId =
+          given()
+              .cookie("session", target.sessionCookie())
+              .get("/api/users/me")
+              .jsonPath()
+              .getLong("id");
+
+      given()
+          .cookie("session", admin.sessionCookie())
+          .header("X-CSRF-Token", admin.csrfToken())
+          .post("/api/users/" + targetId + "/deactivate")
+          .then()
+          .statusCode(200);
+
+      // The target's already-existing session must be killed immediately, not
+      // just future logins blocked.
+      given().cookie("session", target.sessionCookie()).get("/api/users/me").then().statusCode(401);
+
+      TestAuthHelper.login(target.email(), target.password())
+          .then()
+          .statusCode(401)
+          .body("message", equalTo("Invalid email or password"));
+    }
+
+    @Test
+    void deactivateUser_nonAdmin_returns403() {
+      AuthenticatedUser nonAdmin = TestAuthHelper.registerAndLogin();
+      AuthenticatedUser target = TestAuthHelper.registerAndLogin();
+      long targetId =
+          given()
+              .cookie("session", target.sessionCookie())
+              .get("/api/users/me")
+              .jsonPath()
+              .getLong("id");
+
+      given()
+          .cookie("session", nonAdmin.sessionCookie())
+          .header("X-CSRF-Token", nonAdmin.csrfToken())
+          .post("/api/users/" + targetId + "/deactivate")
+          .then()
+          .statusCode(403);
+    }
+
+    @Test
+    void deactivateUser_noSession_returns401() {
+      given().post("/api/users/1/deactivate").then().statusCode(401);
+    }
+
+    @Test
+    void deactivateUser_targetNotFound_returns404() {
+      AuthenticatedUser admin = TestAuthHelper.registerAndLogin();
+      TestAuthHelper.setUserRole(admin.email(), User.Role.ADMIN);
+      long adminId =
+          given()
+              .cookie("session", admin.sessionCookie())
+              .get("/api/users/me")
+              .jsonPath()
+              .getLong("id");
+      long nonexistentId = adminId + 1_000_000L;
+
+      given()
+          .cookie("session", admin.sessionCookie())
+          .header("X-CSRF-Token", admin.csrfToken())
+          .post("/api/users/" + nonexistentId + "/deactivate")
+          .then()
+          .statusCode(404);
+    }
+
+    @Test
+    void deactivateUser_ownAccount_returns400() {
+      AuthenticatedUser admin = TestAuthHelper.registerAndLogin();
+      TestAuthHelper.setUserRole(admin.email(), User.Role.ADMIN);
+      long adminId =
+          given()
+              .cookie("session", admin.sessionCookie())
+              .get("/api/users/me")
+              .jsonPath()
+              .getLong("id");
+
+      given()
+          .cookie("session", admin.sessionCookie())
+          .header("X-CSRF-Token", admin.csrfToken())
+          .post("/api/users/" + adminId + "/deactivate")
+          .then()
+          .statusCode(400)
+          .body("message", equalTo("You cannot deactivate your own account"));
+    }
+
+    @Test
+    void reactivateUser_asAdmin_success_targetCanLoginAgain() {
+      AuthenticatedUser admin = TestAuthHelper.registerAndLogin();
+      TestAuthHelper.setUserRole(admin.email(), User.Role.ADMIN);
+
+      AuthenticatedUser target = TestAuthHelper.registerAndLogin();
+      long targetId =
+          given()
+              .cookie("session", target.sessionCookie())
+              .get("/api/users/me")
+              .jsonPath()
+              .getLong("id");
+      TestAuthHelper.setUserActive(target.email(), false);
+
+      given()
+          .cookie("session", admin.sessionCookie())
+          .header("X-CSRF-Token", admin.csrfToken())
+          .post("/api/users/" + targetId + "/reactivate")
+          .then()
+          .statusCode(200);
+
+      TestAuthHelper.login(target.email(), target.password()).then().statusCode(200);
+    }
+
+    @Test
+    void reactivateUser_nonAdmin_returns403() {
+      AuthenticatedUser nonAdmin = TestAuthHelper.registerAndLogin();
+      AuthenticatedUser target = TestAuthHelper.registerAndLogin();
+      long targetId =
+          given()
+              .cookie("session", target.sessionCookie())
+              .get("/api/users/me")
+              .jsonPath()
+              .getLong("id");
+
+      given()
+          .cookie("session", nonAdmin.sessionCookie())
+          .header("X-CSRF-Token", nonAdmin.csrfToken())
+          .post("/api/users/" + targetId + "/reactivate")
+          .then()
+          .statusCode(403);
+    }
+
+    @Test
+    void reactivateUser_targetNotFound_returns404() {
+      AuthenticatedUser admin = TestAuthHelper.registerAndLogin();
+      TestAuthHelper.setUserRole(admin.email(), User.Role.ADMIN);
+      long adminId =
+          given()
+              .cookie("session", admin.sessionCookie())
+              .get("/api/users/me")
+              .jsonPath()
+              .getLong("id");
+      long nonexistentId = adminId + 1_000_000L;
+
+      given()
+          .cookie("session", admin.sessionCookie())
+          .header("X-CSRF-Token", admin.csrfToken())
+          .post("/api/users/" + nonexistentId + "/reactivate")
+          .then()
+          .statusCode(404);
+    }
+  }
+
+  @Nested
   class PasswordReset {
 
     private static final String GENERIC_MESSAGE =

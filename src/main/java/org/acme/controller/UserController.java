@@ -113,7 +113,8 @@ public class UserController {
           .build();
     }
 
-    // Check if the user is active (not locked out)
+    // A deactivated account (admin-controlled) is separate from a temporary
+    // lockout (failed-attempts-controlled, checked above).
     if (user != null && !user.isActive()) {
       return Response.status(Response.Status.UNAUTHORIZED)
           .entity(new MessageDto("Invalid email or password"))
@@ -284,6 +285,74 @@ public class UserController {
                     + " for user "
                     + targetUser.getUsername()))
         .build();
+  }
+
+  // Deactivate a user (admin only)
+  @POST
+  @Path("{id}/deactivate")
+  @Transactional
+  public Response deactivateUser(
+      @PathParam("id") Long id, @CookieParam("session") Cookie sessionCookie) {
+    Session session = SessionAuth.requireValidSession(sessionCookie);
+    if (session == null) {
+      return Response.status(Response.Status.UNAUTHORIZED).build();
+    }
+    Response forbidden = SessionAuth.requireRole(session, User.Role.ADMIN);
+    if (forbidden != null) {
+      return forbidden;
+    }
+
+    if (id.equals(session.user.id)) {
+      return Response.status(Response.Status.BAD_REQUEST)
+          .entity(new MessageDto("You cannot deactivate your own account"))
+          .build();
+    }
+
+    User targetUser = User.findById(id);
+    if (targetUser == null) {
+      return Response.status(Response.Status.NOT_FOUND)
+          .entity(new MessageDto("User not found"))
+          .build();
+    }
+
+    targetUser.setActive(false);
+    targetUser.persist();
+
+    // A deactivated account shouldn't stay logged in on any device it's
+    // currently signed into.
+    Session.delete("user", targetUser);
+
+    logger.info("Deactivated user: {}", targetUser.getUsername());
+    return Response.ok(new MessageDto("User " + targetUser.getUsername() + " deactivated")).build();
+  }
+
+  // Reactivate a user (admin only)
+  @POST
+  @Path("{id}/reactivate")
+  @Transactional
+  public Response reactivateUser(
+      @PathParam("id") Long id, @CookieParam("session") Cookie sessionCookie) {
+    Session session = SessionAuth.requireValidSession(sessionCookie);
+    if (session == null) {
+      return Response.status(Response.Status.UNAUTHORIZED).build();
+    }
+    Response forbidden = SessionAuth.requireRole(session, User.Role.ADMIN);
+    if (forbidden != null) {
+      return forbidden;
+    }
+
+    User targetUser = User.findById(id);
+    if (targetUser == null) {
+      return Response.status(Response.Status.NOT_FOUND)
+          .entity(new MessageDto("User not found"))
+          .build();
+    }
+
+    targetUser.setActive(true);
+    targetUser.persist();
+
+    logger.info("Reactivated user: {}", targetUser.getUsername());
+    return Response.ok(new MessageDto("User " + targetUser.getUsername() + " reactivated")).build();
   }
 
   // Update the current user's profile
