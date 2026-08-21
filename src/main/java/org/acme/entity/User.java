@@ -27,10 +27,10 @@ public class User extends PanacheEntity {
   private Role role;
 
   public enum Role {
-    customer,
-    admin,
-    vendor,
-    support
+    CUSTOMER,
+    ADMIN,
+    VENDOR,
+    SUPPORT
   }
 
   @Column(nullable = false)

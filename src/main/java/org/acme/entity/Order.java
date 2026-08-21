@@ -29,10 +29,10 @@ public class Order extends PanacheEntity {
   private String guestTrackingId;
 
   private enum Status {
-    pending,
-    completed,
-    canceled,
-    refunded // Add other statuses as needed
+    PENDING,
+    COMPLETED,
+    CANCELED,
+    REFUNDED // Add other statuses as needed
   }
 
   // Generate a guestTrackingId if the order is a guest order and doesn't have an existing one

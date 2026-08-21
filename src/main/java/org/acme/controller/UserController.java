@@ -77,7 +77,7 @@ public class UserController {
     user.setUsername(registerDto.getUsername());
     user.setEmail(registerDto.getEmail());
     user.setPassword(registerDto.getPassword()); // hashed internally in setPassword()
-    user.setRole(User.Role.customer);
+    user.setRole(User.Role.CUSTOMER);
     user.persist();
 
     logger.info("Created user: {}", user.getUsername());
@@ -279,7 +279,7 @@ public class UserController {
       return Response.status(Response.Status.UNAUTHORIZED).build();
     }
     // Only admins may change another user's role
-    if (!session.user.hasRole(User.Role.admin)) {
+    if (!session.user.hasRole(User.Role.ADMIN)) {
       return Response.status(Response.Status.FORBIDDEN).build();
     }
 

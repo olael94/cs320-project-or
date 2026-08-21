@@ -60,13 +60,13 @@ class UserControllerTest {
                   + email
                   + "\",\"password\":\""
                   + TestAuthHelper.PASSWORD
-                  + "\",\"role\":\"admin\"}")
+                  + "\",\"role\":\"ADMIN\"}")
           .post("/api/users/register")
           .then()
           .statusCode(201);
 
       org.junit.jupiter.api.Assertions.assertEquals(
-          User.Role.customer, TestAuthHelper.getUserRole(email));
+          User.Role.CUSTOMER, TestAuthHelper.getUserRole(email));
     }
   }
 
@@ -167,7 +167,7 @@ class UserControllerTest {
           .then()
           .statusCode(200)
           .body("email", equalTo(user.email()))
-          .body("role", equalTo("customer"));
+          .body("role", equalTo("CUSTOMER"));
     }
 
     @Test
@@ -352,7 +352,7 @@ class UserControllerTest {
     @Test
     void updateUserRole_asAdmin_success_changesRole() {
       AuthenticatedUser admin = TestAuthHelper.registerAndLogin();
-      TestAuthHelper.setUserRole(admin.email(), User.Role.admin);
+      TestAuthHelper.setUserRole(admin.email(), User.Role.ADMIN);
 
       AuthenticatedUser target = TestAuthHelper.registerAndLogin();
       long targetId =
@@ -366,11 +366,11 @@ class UserControllerTest {
           .cookie("session", admin.sessionCookie())
           .header("X-CSRF-Token", admin.csrfToken())
           .contentType("application/json")
-          .body("{\"role\":\"vendor\"}")
+          .body("{\"role\":\"VENDOR\"}")
           .put("/api/users/" + targetId + "/role")
           .then()
           .statusCode(200)
-          .body("message", equalTo("Role updated to vendor for user testuser"));
+          .body("message", equalTo("Role updated to VENDOR for user testuser"));
     }
 
     @Test
@@ -388,7 +388,7 @@ class UserControllerTest {
           .cookie("session", nonAdmin.sessionCookie())
           .header("X-CSRF-Token", nonAdmin.csrfToken())
           .contentType("application/json")
-          .body("{\"role\":\"admin\"}")
+          .body("{\"role\":\"ADMIN\"}")
           .put("/api/users/" + targetId + "/role")
           .then()
           .statusCode(403);
@@ -398,7 +398,7 @@ class UserControllerTest {
     void updateUserRole_noSession_returns401() {
       given()
           .contentType("application/json")
-          .body("{\"role\":\"admin\"}")
+          .body("{\"role\":\"ADMIN\"}")
           .put("/api/users/1/role")
           .then()
           .statusCode(401);
@@ -407,7 +407,7 @@ class UserControllerTest {
     @Test
     void updateUserRole_missingRole_returns400() {
       AuthenticatedUser admin = TestAuthHelper.registerAndLogin();
-      TestAuthHelper.setUserRole(admin.email(), User.Role.admin);
+      TestAuthHelper.setUserRole(admin.email(), User.Role.ADMIN);
       long adminId =
           given()
               .cookie("session", admin.sessionCookie())
@@ -429,7 +429,7 @@ class UserControllerTest {
     @Test
     void updateUserRole_invalidRoleValue_returns400() {
       AuthenticatedUser admin = TestAuthHelper.registerAndLogin();
-      TestAuthHelper.setUserRole(admin.email(), User.Role.admin);
+      TestAuthHelper.setUserRole(admin.email(), User.Role.ADMIN);
       long adminId =
           given()
               .cookie("session", admin.sessionCookie())
@@ -450,7 +450,7 @@ class UserControllerTest {
     @Test
     void updateUserRole_targetUserNotFound_returns404() {
       AuthenticatedUser admin = TestAuthHelper.registerAndLogin();
-      TestAuthHelper.setUserRole(admin.email(), User.Role.admin);
+      TestAuthHelper.setUserRole(admin.email(), User.Role.ADMIN);
       long adminId =
           given()
               .cookie("session", admin.sessionCookie())
@@ -465,7 +465,7 @@ class UserControllerTest {
           .cookie("session", admin.sessionCookie())
           .header("X-CSRF-Token", admin.csrfToken())
           .contentType("application/json")
-          .body("{\"role\":\"vendor\"}")
+          .body("{\"role\":\"VENDOR\"}")
           .put("/api/users/" + nonexistentId + "/role")
           .then()
           .statusCode(404)

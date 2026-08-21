@@ -203,7 +203,7 @@
             ```json
             {
                 "totalAmount": 100.5,
-                "status": "pending",
+                "status": "PENDING",
                 "user": {
                     "id": 1
                 } 
@@ -213,7 +213,7 @@
             ```json
             {
                 "totalAmount": "Laptop",
-                "status": "pending"
+                "status": "PENDING"
             }
             ```
     - **Expected Response**
@@ -242,7 +242,7 @@
               "id": 1,
               "totalAmount": 100.5,
               "orderDate": "2024-10-20T12:34:56",
-              "status": "pending",
+              "status": "PENDING",
               "user": {
                     "id": 1,
                     "username": "stored username",
