@@ -1,5 +1,6 @@
 package org.acme.dto;
 
+import java.util.Set;
 import org.acme.entity.User;
 
 /**
@@ -11,14 +12,14 @@ public class UserDto {
   public Long id;
   public String username;
   public String email;
-  public User.Role role;
+  public Set<User.Role> roles;
   public boolean active;
 
   public UserDto(User user) {
     this.id = user.id;
     this.username = user.getUsername();
     this.email = user.getEmail();
-    this.role = user.getRole();
+    this.roles = user.getRoles();
     this.active = user.isActive();
   }
 }

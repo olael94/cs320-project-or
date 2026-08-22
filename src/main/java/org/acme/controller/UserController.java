@@ -79,7 +79,7 @@ public class UserController {
     user.setUsername(registerDto.getUsername());
     user.setEmail(registerDto.getEmail());
     user.setPassword(registerDto.getPassword()); // hashed internally in setPassword()
-    user.setRole(User.Role.CUSTOMER);
+    user.addRole(User.Role.CUSTOMER);
     user.persist();
 
     logger.info("Created user: {}", user.getUsername());
@@ -241,50 +241,6 @@ public class UserController {
 
     logger.info("Fetching user with ID {}", id);
     return Response.ok(new UserDto(session.user)).build();
-  }
-
-  // Change user's role (Admin Only)
-  @PUT
-  @Path("{id}/role")
-  @Consumes(MediaType.APPLICATION_JSON)
-  @Transactional
-  public Response updateUserRole(
-      @PathParam("id") Long id,
-      @CookieParam("session") Cookie sessionCookie,
-      UpdateRoleDto updateRoleDto) {
-    Session session = SessionAuth.requireValidSession(sessionCookie);
-    if (session == null) {
-      return Response.status(Response.Status.UNAUTHORIZED).build();
-    }
-    Response forbidden = SessionAuth.requireRole(session, User.Role.ADMIN);
-    if (forbidden != null) {
-      return forbidden;
-    }
-
-    if (updateRoleDto.getRole() == null) {
-      return Response.status(Response.Status.BAD_REQUEST)
-          .entity(new MessageDto("Role is required"))
-          .build();
-    }
-
-    User targetUser = User.findById(id);
-    if (targetUser == null) {
-      return Response.status(Response.Status.NOT_FOUND)
-          .entity(new MessageDto("User not found"))
-          .build();
-    }
-
-    targetUser.setRole(updateRoleDto.getRole());
-    targetUser.persist();
-
-    logger.info("Updated role for user: {}", targetUser.getUsername());
-    return Response.ok(
-            new MessageDto(
-                "Role updated to "
-                    + targetUser.getRole()
-                    + " for user "
-                    + targetUser.getUsername()))
-        .build();
   }
 
   // Deactivate a user (admin only)

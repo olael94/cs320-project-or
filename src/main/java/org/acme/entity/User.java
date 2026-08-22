@@ -4,6 +4,8 @@ import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import java.time.Instant;
+import java.util.HashSet;
+import java.util.Set;
 import org.mindrot.jbcrypt.BCrypt;
 
 @Entity
@@ -23,9 +25,11 @@ public class User extends PanacheEntity {
   @Column(nullable = false)
   private String password;
 
+  @ElementCollection(fetch = FetchType.EAGER)
+  @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
   @Enumerated(EnumType.STRING)
-  @Column(columnDefinition = "VARCHAR(20)")
-  private Role role;
+  @Column(name = "role", columnDefinition = "VARCHAR(20)")
+  private Set<Role> roles = new HashSet<>();
 
   public enum Role {
     CUSTOMER,
@@ -55,8 +59,8 @@ public class User extends PanacheEntity {
     return password;
   }
 
-  public Role getRole() {
-    return role;
+  public Set<Role> getRoles() {
+    return roles;
   }
 
   public int getFailedLoginAttempts() {
@@ -86,8 +90,12 @@ public class User extends PanacheEntity {
     }
   }
 
-  public void setRole(Role role) {
-    this.role = role;
+  public void addRole(Role role) {
+    roles.add(role);
+  }
+
+  public void removeRole(Role role) {
+    roles.remove(role);
   }
 
   public void setFailedLoginAttempts(int failedLoginAttempts) {
@@ -108,9 +116,9 @@ public class User extends PanacheEntity {
 
   // Method to check if the user has a specific role
   public boolean hasRole(
-      Role... roles) { // Role... means that roles can be passed as multiple arguments
-    for (Role role : roles) {
-      if (this.role == role) {
+      Role... requiredRoles) { // Role... means that roles can be passed as multiple arguments
+    for (Role requiredRole : requiredRoles) {
+      if (roles.contains(requiredRole)) {
         return true;
       }
     }

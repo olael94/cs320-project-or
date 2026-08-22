@@ -6,6 +6,7 @@ import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.restassured.response.Response;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.Set;
 import java.util.UUID;
 import org.acme.entity.Order;
 import org.acme.entity.PasswordResetToken;
@@ -96,7 +97,7 @@ public class TestAuthHelper {
         .run(
             () -> {
               User user = User.find("email", email).firstResult();
-              user.setRole(role);
+              user.addRole(role);
               user.persist();
             });
   }
@@ -142,9 +143,9 @@ public class TestAuthHelper {
             });
   }
 
-  public static User.Role getUserRole(String email) {
+  public static Set<User.Role> getUserRoles(String email) {
     return QuarkusTransaction.requiringNew()
-        .call(() -> User.find("email", email).<User>firstResult().getRole());
+        .call(() -> User.find("email", email).<User>firstResult().getRoles());
   }
 
   public static Instant getSessionExpiresAt(String sessionToken) {
