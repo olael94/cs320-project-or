@@ -383,6 +383,229 @@ class UserControllerTest {
   }
 
   @Nested
+  class GrantRevokeRole {
+
+    private long idOf(AuthenticatedUser user) {
+      return given()
+          .cookie("session", user.sessionCookie())
+          .get("/api/users/me")
+          .jsonPath()
+          .getLong("id");
+    }
+
+    @Test
+    void grantRole_asAdmin_success() {
+      AuthenticatedUser admin = TestAuthHelper.registerAndLogin();
+      TestAuthHelper.addUserRole(admin.email(), User.Role.ADMIN);
+
+      AuthenticatedUser target = TestAuthHelper.registerAndLogin();
+      long targetId = idOf(target);
+
+      given()
+          .cookie("session", admin.sessionCookie())
+          .header("X-CSRF-Token", admin.csrfToken())
+          .post("/api/users/" + targetId + "/roles/VENDOR")
+          .then()
+          .statusCode(200);
+
+      org.junit.jupiter.api.Assertions.assertTrue(
+          TestAuthHelper.getUserRoles(target.email()).contains(User.Role.VENDOR));
+    }
+
+    @Test
+    void grantRole_nonAdmin_returns403() {
+      AuthenticatedUser nonAdmin = TestAuthHelper.registerAndLogin();
+      AuthenticatedUser target = TestAuthHelper.registerAndLogin();
+      long targetId = idOf(target);
+
+      given()
+          .cookie("session", nonAdmin.sessionCookie())
+          .header("X-CSRF-Token", nonAdmin.csrfToken())
+          .post("/api/users/" + targetId + "/roles/VENDOR")
+          .then()
+          .statusCode(403);
+    }
+
+    @Test
+    void grantRole_noSession_returns401() {
+      given().post("/api/users/1/roles/VENDOR").then().statusCode(401);
+    }
+
+    @Test
+    void grantRole_targetNotFound_returns404() {
+      AuthenticatedUser admin = TestAuthHelper.registerAndLogin();
+      TestAuthHelper.addUserRole(admin.email(), User.Role.ADMIN);
+      long adminId = idOf(admin);
+      long nonexistentId = adminId + 1_000_000L;
+
+      given()
+          .cookie("session", admin.sessionCookie())
+          .header("X-CSRF-Token", admin.csrfToken())
+          .post("/api/users/" + nonexistentId + "/roles/VENDOR")
+          .then()
+          .statusCode(404);
+    }
+
+    @Test
+    void grantRole_alreadyHeld_isIdempotent() {
+      AuthenticatedUser admin = TestAuthHelper.registerAndLogin();
+      TestAuthHelper.addUserRole(admin.email(), User.Role.ADMIN);
+
+      AuthenticatedUser target = TestAuthHelper.registerAndLogin();
+      long targetId = idOf(target);
+      TestAuthHelper.addUserRole(target.email(), User.Role.VENDOR);
+
+      // Granting a role the target already has should just succeed, not error.
+      given()
+          .cookie("session", admin.sessionCookie())
+          .header("X-CSRF-Token", admin.csrfToken())
+          .post("/api/users/" + targetId + "/roles/VENDOR")
+          .then()
+          .statusCode(200);
+
+      org.junit.jupiter.api.Assertions.assertEquals(
+          java.util.Set.of(User.Role.CUSTOMER, User.Role.VENDOR),
+          TestAuthHelper.getUserRoles(target.email()));
+    }
+
+    @Test
+    void grantRole_ownAccount_isAllowed() {
+      AuthenticatedUser admin = TestAuthHelper.registerAndLogin();
+      TestAuthHelper.addUserRole(admin.email(), User.Role.ADMIN);
+      long adminId = idOf(admin);
+
+      // Self-grant is allowed - only self-revoke is blocked.
+      given()
+          .cookie("session", admin.sessionCookie())
+          .header("X-CSRF-Token", admin.csrfToken())
+          .post("/api/users/" + adminId + "/roles/VENDOR")
+          .then()
+          .statusCode(200);
+
+      org.junit.jupiter.api.Assertions.assertTrue(
+          TestAuthHelper.getUserRoles(admin.email()).contains(User.Role.VENDOR));
+    }
+
+    @Test
+    void userCanHoldMultipleRolesSimultaneously() {
+      AuthenticatedUser admin = TestAuthHelper.registerAndLogin();
+      TestAuthHelper.addUserRole(admin.email(), User.Role.ADMIN);
+
+      AuthenticatedUser target = TestAuthHelper.registerAndLogin();
+      long targetId = idOf(target);
+
+      // Grant a second role on top of the CUSTOMER role registration already gave them.
+      given()
+          .cookie("session", admin.sessionCookie())
+          .header("X-CSRF-Token", admin.csrfToken())
+          .post("/api/users/" + targetId + "/roles/VENDOR")
+          .then()
+          .statusCode(200);
+
+      org.junit.jupiter.api.Assertions.assertEquals(
+          java.util.Set.of(User.Role.CUSTOMER, User.Role.VENDOR),
+          TestAuthHelper.getUserRoles(target.email()));
+
+      // Revoking just one role must not disturb the other.
+      given()
+          .cookie("session", admin.sessionCookie())
+          .header("X-CSRF-Token", admin.csrfToken())
+          .delete("/api/users/" + targetId + "/roles/CUSTOMER")
+          .then()
+          .statusCode(200);
+
+      org.junit.jupiter.api.Assertions.assertEquals(
+          java.util.Set.of(User.Role.VENDOR), TestAuthHelper.getUserRoles(target.email()));
+    }
+
+    @Test
+    void revokeRole_asAdmin_success() {
+      AuthenticatedUser admin = TestAuthHelper.registerAndLogin();
+      TestAuthHelper.addUserRole(admin.email(), User.Role.ADMIN);
+
+      AuthenticatedUser target = TestAuthHelper.registerAndLogin();
+      long targetId = idOf(target);
+      TestAuthHelper.addUserRole(target.email(), User.Role.VENDOR);
+
+      given()
+          .cookie("session", admin.sessionCookie())
+          .header("X-CSRF-Token", admin.csrfToken())
+          .delete("/api/users/" + targetId + "/roles/VENDOR")
+          .then()
+          .statusCode(200);
+
+      org.junit.jupiter.api.Assertions.assertFalse(
+          TestAuthHelper.getUserRoles(target.email()).contains(User.Role.VENDOR));
+    }
+
+    @Test
+    void revokeRole_nonAdmin_returns403() {
+      AuthenticatedUser nonAdmin = TestAuthHelper.registerAndLogin();
+      AuthenticatedUser target = TestAuthHelper.registerAndLogin();
+      long targetId = idOf(target);
+
+      given()
+          .cookie("session", nonAdmin.sessionCookie())
+          .header("X-CSRF-Token", nonAdmin.csrfToken())
+          .delete("/api/users/" + targetId + "/roles/CUSTOMER")
+          .then()
+          .statusCode(403);
+    }
+
+    @Test
+    void revokeRole_noSession_returns401() {
+      given().delete("/api/users/1/roles/CUSTOMER").then().statusCode(401);
+    }
+
+    @Test
+    void revokeRole_targetNotFound_returns404() {
+      AuthenticatedUser admin = TestAuthHelper.registerAndLogin();
+      TestAuthHelper.addUserRole(admin.email(), User.Role.ADMIN);
+      long adminId = idOf(admin);
+      long nonexistentId = adminId + 1_000_000L;
+
+      given()
+          .cookie("session", admin.sessionCookie())
+          .header("X-CSRF-Token", admin.csrfToken())
+          .delete("/api/users/" + nonexistentId + "/roles/CUSTOMER")
+          .then()
+          .statusCode(404);
+    }
+
+    @Test
+    void revokeRole_notHeld_isIdempotent() {
+      AuthenticatedUser admin = TestAuthHelper.registerAndLogin();
+      TestAuthHelper.addUserRole(admin.email(), User.Role.ADMIN);
+
+      AuthenticatedUser target = TestAuthHelper.registerAndLogin();
+      long targetId = idOf(target);
+
+      // Target never had VENDOR - revoking it anyway should just succeed, not error.
+      given()
+          .cookie("session", admin.sessionCookie())
+          .header("X-CSRF-Token", admin.csrfToken())
+          .delete("/api/users/" + targetId + "/roles/VENDOR")
+          .then()
+          .statusCode(200);
+    }
+
+    @Test
+    void revokeRole_ownAccount_returns400() {
+      AuthenticatedUser admin = TestAuthHelper.registerAndLogin();
+      TestAuthHelper.addUserRole(admin.email(), User.Role.ADMIN);
+      long adminId = idOf(admin);
+
+      given()
+          .cookie("session", admin.sessionCookie())
+          .header("X-CSRF-Token", admin.csrfToken())
+          .delete("/api/users/" + adminId + "/roles/ADMIN")
+          .then()
+          .statusCode(400)
+          .body("message", equalTo("You cannot revoke your own role"));
+    }
+  }
+
+  @Nested
   class DeactivateReactivate {
 
     @Test
