@@ -219,7 +219,7 @@ class UserControllerTest {
     @Test
     void getAllUsers_asAdmin_returns200() {
       AuthenticatedUser admin = TestAuthHelper.registerAndLogin();
-      TestAuthHelper.setUserRole(admin.email(), User.Role.ADMIN);
+      TestAuthHelper.addUserRole(admin.email(), User.Role.ADMIN);
 
       given().cookie("session", admin.sessionCookie()).get("/api/users").then().statusCode(200);
     }
@@ -388,7 +388,7 @@ class UserControllerTest {
     @Test
     void deactivateUser_asAdmin_success_killsTargetSessionAndBlocksLogin() {
       AuthenticatedUser admin = TestAuthHelper.registerAndLogin();
-      TestAuthHelper.setUserRole(admin.email(), User.Role.ADMIN);
+      TestAuthHelper.addUserRole(admin.email(), User.Role.ADMIN);
 
       AuthenticatedUser target = TestAuthHelper.registerAndLogin();
       long targetId =
@@ -442,7 +442,7 @@ class UserControllerTest {
     @Test
     void deactivateUser_targetNotFound_returns404() {
       AuthenticatedUser admin = TestAuthHelper.registerAndLogin();
-      TestAuthHelper.setUserRole(admin.email(), User.Role.ADMIN);
+      TestAuthHelper.addUserRole(admin.email(), User.Role.ADMIN);
       long adminId =
           given()
               .cookie("session", admin.sessionCookie())
@@ -462,7 +462,7 @@ class UserControllerTest {
     @Test
     void deactivateUser_ownAccount_returns400() {
       AuthenticatedUser admin = TestAuthHelper.registerAndLogin();
-      TestAuthHelper.setUserRole(admin.email(), User.Role.ADMIN);
+      TestAuthHelper.addUserRole(admin.email(), User.Role.ADMIN);
       long adminId =
           given()
               .cookie("session", admin.sessionCookie())
@@ -482,7 +482,7 @@ class UserControllerTest {
     @Test
     void reactivateUser_asAdmin_success_targetCanLoginAgain() {
       AuthenticatedUser admin = TestAuthHelper.registerAndLogin();
-      TestAuthHelper.setUserRole(admin.email(), User.Role.ADMIN);
+      TestAuthHelper.addUserRole(admin.email(), User.Role.ADMIN);
 
       AuthenticatedUser target = TestAuthHelper.registerAndLogin();
       long targetId =
@@ -525,7 +525,7 @@ class UserControllerTest {
     @Test
     void reactivateUser_targetNotFound_returns404() {
       AuthenticatedUser admin = TestAuthHelper.registerAndLogin();
-      TestAuthHelper.setUserRole(admin.email(), User.Role.ADMIN);
+      TestAuthHelper.addUserRole(admin.email(), User.Role.ADMIN);
       long adminId =
           given()
               .cookie("session", admin.sessionCookie())
@@ -549,7 +549,7 @@ class UserControllerTest {
     @Test
     void adminRequestPasswordReset_asAdmin_success_targetCanCompleteReset() {
       AuthenticatedUser admin = TestAuthHelper.registerAndLogin();
-      TestAuthHelper.setUserRole(admin.email(), User.Role.ADMIN);
+      TestAuthHelper.addUserRole(admin.email(), User.Role.ADMIN);
 
       AuthenticatedUser target = TestAuthHelper.registerAndLogin();
       long targetId =
@@ -606,7 +606,7 @@ class UserControllerTest {
     @Test
     void adminRequestPasswordReset_targetNotFound_returns404() {
       AuthenticatedUser admin = TestAuthHelper.registerAndLogin();
-      TestAuthHelper.setUserRole(admin.email(), User.Role.ADMIN);
+      TestAuthHelper.addUserRole(admin.email(), User.Role.ADMIN);
       long adminId =
           given()
               .cookie("session", admin.sessionCookie())

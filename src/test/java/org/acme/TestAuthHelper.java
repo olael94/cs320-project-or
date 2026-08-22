@@ -89,10 +89,10 @@ public class TestAuthHelper {
   }
 
   /**
-   * Directly sets a user's role, bypassing the app - there's no self-service way to become an
+   * Directly grants a user a role, bypassing the app - there's no self-service way to become an
    * admin.
    */
-  public static void setUserRole(String email, User.Role role) {
+  public static void addUserRole(String email, User.Role role) {
     QuarkusTransaction.requiringNew()
         .run(
             () -> {
