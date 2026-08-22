@@ -5,10 +5,7 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Cookie;
 import jakarta.ws.rs.core.Response;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 import org.acme.dto.MessageDto;
-import org.acme.dto.OrderDto;
 import org.acme.entity.Order;
 import org.acme.entity.Session;
 import org.acme.entity.User;
@@ -56,31 +53,6 @@ public class OrderController {
     logger.info("Order created successfully with tracking info: {}", trackingInfo);
 
     return Response.status(Response.Status.CREATED).entity(new MessageDto(trackingInfo)).build();
-  }
-
-  // Get all orders (admin only)
-  @GET
-  public Response getAllOrders(@CookieParam("session") Cookie sessionCookie) {
-    logger.info("Fetching all orders");
-
-    Session session = SessionAuth.requireValidSession(sessionCookie);
-    if (session == null) {
-      return Response.status(Response.Status.UNAUTHORIZED).build();
-    }
-
-    Response forbidden = SessionAuth.requireRole(session, User.Role.ADMIN);
-    if (forbidden != null) {
-      return forbidden;
-    }
-
-    logger.info("All orders fetched successfully");
-    List<Order> orders = Order.listAll();
-    List<OrderDto> orderDtos = new ArrayList<>();
-    for (Order order : orders) {
-      orderDtos.add(new OrderDto(order));
-    }
-
-    return Response.ok(orderDtos).build();
   }
 
   // Get GUEST order by guestTrackingId
@@ -142,57 +114,6 @@ public class OrderController {
     return Response.ok(new MessageDto(message)).build();
   }
 
-  // Update an existing USER order by ID
-  @PUT
-  @Path("{id}")
-  @Transactional
-  public Response updateOrder(
-      @PathParam("id") Long id, @CookieParam("session") Cookie sessionCookie, Order updatedOrder) {
-    logger.info("Updating order with ID: {}", id);
-
-    Session session = SessionAuth.requireValidSession(sessionCookie);
-    if (session == null) {
-      return Response.status(Response.Status.UNAUTHORIZED).build();
-    }
-
-    Response forbidden = SessionAuth.requireRole(session, User.Role.ADMIN);
-    if (forbidden != null) {
-      return forbidden;
-    }
-
-    Order existingOrder = Order.findById(id);
-    if (existingOrder == null) {
-      logger.warn("Order not found for ID: {}", id);
-
-      return Response.status(Response.Status.NOT_FOUND)
-          .entity(new MessageDto("Order not found")) // User will see this message
-          .build();
-    }
-
-    // Check for user existence before updating
-    if (updatedOrder.getUser() != null && updatedOrder.getUser().id != null) {
-      User user = User.findById(updatedOrder.getUser().id);
-      if (user == null) {
-        logger.warn("User not found for ID: {}", updatedOrder.getUser().id);
-        return Response.status(Response.Status.NOT_FOUND)
-            .entity(new MessageDto("User not found")) // User will see this message
-            .build();
-      }
-      existingOrder.setUser(user);
-    }
-
-    // Update order fields
-    existingOrder.setOrderDate(updatedOrder.getOrderDate());
-    existingOrder.setTotalAmount(updatedOrder.getTotalAmount());
-    existingOrder.setStatus(updatedOrder.getStatus());
-    existingOrder.persist();
-
-    logger.info("Order updated successfully for ID: {}", id);
-    // User will see this message
-    String message = "Order updated successfully for ID: " + existingOrder.id;
-    return Response.ok(new MessageDto(message)).build();
-  }
-
   // Update an existing GUEST order by guestTrackingId
   @PUT
   @Path("{guestTrackingId}")
@@ -225,37 +146,6 @@ public class OrderController {
         "Guest order updated successfully for guestTrackingId: "
             + existingGuestOrder.getGuestTrackingId();
     return Response.ok(new MessageDto(message)).build();
-  }
-
-  // Delete an order by ID
-  @DELETE
-  @Path("{id}")
-  @Transactional
-  public Response deleteOrder(
-      @PathParam("id") Long id, @CookieParam("session") Cookie sessionCookie) {
-    logger.info("Deleting order with ID: {}", id);
-
-    Session session = SessionAuth.requireValidSession(sessionCookie);
-    if (session == null) {
-      return Response.status(Response.Status.UNAUTHORIZED).build();
-    }
-
-    Response forbidden = SessionAuth.requireRole(session, User.Role.ADMIN);
-    if (forbidden != null) {
-      return forbidden;
-    }
-
-    Order order = Order.findById(id);
-    if (order == null) {
-      return Response.status(Response.Status.NOT_FOUND)
-          .entity(new MessageDto("Order not found")) // User will see this message
-          .build();
-    }
-    order.delete();
-    logger.info("Order deleted successfully for ID: {}", id);
-    // User will see this message
-    String message = "Order deleted successfully for ID: " + id;
-    return Response.ok(new MessageDto(message)).build(); // Return 204 No Content
   }
 
   // Delete an order by guestTrackingId
