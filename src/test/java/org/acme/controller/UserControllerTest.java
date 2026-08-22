@@ -2,6 +2,7 @@ package org.acme.controller;
 
 import static io.restassured.RestAssured.given;
 import static org.acme.TestAuthHelper.AuthenticatedUser;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
 
@@ -66,7 +67,7 @@ class UserControllerTest {
           .statusCode(201);
 
       org.junit.jupiter.api.Assertions.assertEquals(
-          User.Role.CUSTOMER, TestAuthHelper.getUserRole(email));
+          java.util.Set.of(User.Role.CUSTOMER), TestAuthHelper.getUserRoles(email));
     }
   }
 
@@ -193,7 +194,7 @@ class UserControllerTest {
           .then()
           .statusCode(200)
           .body("email", equalTo(user.email()))
-          .body("role", equalTo("CUSTOMER"))
+          .body("roles", contains("CUSTOMER"))
           .body("active", equalTo(true));
     }
 
@@ -218,7 +219,7 @@ class UserControllerTest {
     @Test
     void getAllUsers_asAdmin_returns200() {
       AuthenticatedUser admin = TestAuthHelper.registerAndLogin();
-      TestAuthHelper.setUserRole(admin.email(), User.Role.ADMIN);
+      TestAuthHelper.addUserRole(admin.email(), User.Role.ADMIN);
 
       given().cookie("session", admin.sessionCookie()).get("/api/users").then().statusCode(200);
     }
@@ -382,129 +383,225 @@ class UserControllerTest {
   }
 
   @Nested
-  class UpdateRole {
+  class GrantRevokeRole {
+
+    private long idOf(AuthenticatedUser user) {
+      return given()
+          .cookie("session", user.sessionCookie())
+          .get("/api/users/me")
+          .jsonPath()
+          .getLong("id");
+    }
 
     @Test
-    void updateUserRole_asAdmin_success_changesRole() {
+    void grantRole_asAdmin_success() {
       AuthenticatedUser admin = TestAuthHelper.registerAndLogin();
-      TestAuthHelper.setUserRole(admin.email(), User.Role.ADMIN);
+      TestAuthHelper.addUserRole(admin.email(), User.Role.ADMIN);
 
       AuthenticatedUser target = TestAuthHelper.registerAndLogin();
-      long targetId =
-          given()
-              .cookie("session", target.sessionCookie())
-              .get("/api/users/me")
-              .jsonPath()
-              .getLong("id");
+      long targetId = idOf(target);
 
       given()
           .cookie("session", admin.sessionCookie())
           .header("X-CSRF-Token", admin.csrfToken())
-          .contentType("application/json")
-          .body("{\"role\":\"VENDOR\"}")
-          .put("/api/users/" + targetId + "/role")
+          .post("/api/users/" + targetId + "/roles/VENDOR")
           .then()
-          .statusCode(200)
-          .body("message", equalTo("Role updated to VENDOR for user testuser"));
+          .statusCode(200);
+
+      org.junit.jupiter.api.Assertions.assertTrue(
+          TestAuthHelper.getUserRoles(target.email()).contains(User.Role.VENDOR));
     }
 
     @Test
-    void updateUserRole_nonAdmin_returns403() {
+    void grantRole_nonAdmin_returns403() {
       AuthenticatedUser nonAdmin = TestAuthHelper.registerAndLogin();
       AuthenticatedUser target = TestAuthHelper.registerAndLogin();
-      long targetId =
-          given()
-              .cookie("session", target.sessionCookie())
-              .get("/api/users/me")
-              .jsonPath()
-              .getLong("id");
+      long targetId = idOf(target);
 
       given()
           .cookie("session", nonAdmin.sessionCookie())
           .header("X-CSRF-Token", nonAdmin.csrfToken())
-          .contentType("application/json")
-          .body("{\"role\":\"ADMIN\"}")
-          .put("/api/users/" + targetId + "/role")
+          .post("/api/users/" + targetId + "/roles/VENDOR")
           .then()
           .statusCode(403);
     }
 
     @Test
-    void updateUserRole_noSession_returns401() {
-      given()
-          .contentType("application/json")
-          .body("{\"role\":\"ADMIN\"}")
-          .put("/api/users/1/role")
-          .then()
-          .statusCode(401);
+    void grantRole_noSession_returns401() {
+      given().post("/api/users/1/roles/VENDOR").then().statusCode(401);
     }
 
     @Test
-    void updateUserRole_missingRole_returns400() {
+    void grantRole_targetNotFound_returns404() {
       AuthenticatedUser admin = TestAuthHelper.registerAndLogin();
-      TestAuthHelper.setUserRole(admin.email(), User.Role.ADMIN);
-      long adminId =
-          given()
-              .cookie("session", admin.sessionCookie())
-              .get("/api/users/me")
-              .jsonPath()
-              .getLong("id");
-
-      given()
-          .cookie("session", admin.sessionCookie())
-          .header("X-CSRF-Token", admin.csrfToken())
-          .contentType("application/json")
-          .body("{}")
-          .put("/api/users/" + adminId + "/role")
-          .then()
-          .statusCode(400)
-          .body("message", equalTo("Role is required"));
-    }
-
-    @Test
-    void updateUserRole_invalidRoleValue_returns400() {
-      AuthenticatedUser admin = TestAuthHelper.registerAndLogin();
-      TestAuthHelper.setUserRole(admin.email(), User.Role.ADMIN);
-      long adminId =
-          given()
-              .cookie("session", admin.sessionCookie())
-              .get("/api/users/me")
-              .jsonPath()
-              .getLong("id");
-
-      given()
-          .cookie("session", admin.sessionCookie())
-          .header("X-CSRF-Token", admin.csrfToken())
-          .contentType("application/json")
-          .body("{\"role\":\"superadmin\"}")
-          .put("/api/users/" + adminId + "/role")
-          .then()
-          .statusCode(400);
-    }
-
-    @Test
-    void updateUserRole_targetUserNotFound_returns404() {
-      AuthenticatedUser admin = TestAuthHelper.registerAndLogin();
-      TestAuthHelper.setUserRole(admin.email(), User.Role.ADMIN);
-      long adminId =
-          given()
-              .cookie("session", admin.sessionCookie())
-              .get("/api/users/me")
-              .jsonPath()
-              .getLong("id");
-
-      // An id well past any id a test run could plausibly have created.
+      TestAuthHelper.addUserRole(admin.email(), User.Role.ADMIN);
+      long adminId = idOf(admin);
       long nonexistentId = adminId + 1_000_000L;
 
       given()
           .cookie("session", admin.sessionCookie())
           .header("X-CSRF-Token", admin.csrfToken())
-          .contentType("application/json")
-          .body("{\"role\":\"VENDOR\"}")
-          .put("/api/users/" + nonexistentId + "/role")
+          .post("/api/users/" + nonexistentId + "/roles/VENDOR")
           .then()
-          .statusCode(404)
-          .body("message", equalTo("User not found"));
+          .statusCode(404);
+    }
+
+    @Test
+    void grantRole_alreadyHeld_isIdempotent() {
+      AuthenticatedUser admin = TestAuthHelper.registerAndLogin();
+      TestAuthHelper.addUserRole(admin.email(), User.Role.ADMIN);
+
+      AuthenticatedUser target = TestAuthHelper.registerAndLogin();
+      long targetId = idOf(target);
+      TestAuthHelper.addUserRole(target.email(), User.Role.VENDOR);
+
+      // Granting a role the target already has should just succeed, not error.
+      given()
+          .cookie("session", admin.sessionCookie())
+          .header("X-CSRF-Token", admin.csrfToken())
+          .post("/api/users/" + targetId + "/roles/VENDOR")
+          .then()
+          .statusCode(200);
+
+      org.junit.jupiter.api.Assertions.assertEquals(
+          java.util.Set.of(User.Role.CUSTOMER, User.Role.VENDOR),
+          TestAuthHelper.getUserRoles(target.email()));
+    }
+
+    @Test
+    void grantRole_ownAccount_isAllowed() {
+      AuthenticatedUser admin = TestAuthHelper.registerAndLogin();
+      TestAuthHelper.addUserRole(admin.email(), User.Role.ADMIN);
+      long adminId = idOf(admin);
+
+      // Self-grant is allowed - only self-revoke is blocked.
+      given()
+          .cookie("session", admin.sessionCookie())
+          .header("X-CSRF-Token", admin.csrfToken())
+          .post("/api/users/" + adminId + "/roles/VENDOR")
+          .then()
+          .statusCode(200);
+
+      org.junit.jupiter.api.Assertions.assertTrue(
+          TestAuthHelper.getUserRoles(admin.email()).contains(User.Role.VENDOR));
+    }
+
+    @Test
+    void userCanHoldMultipleRolesSimultaneously() {
+      AuthenticatedUser admin = TestAuthHelper.registerAndLogin();
+      TestAuthHelper.addUserRole(admin.email(), User.Role.ADMIN);
+
+      AuthenticatedUser target = TestAuthHelper.registerAndLogin();
+      long targetId = idOf(target);
+
+      // Grant a second role on top of the CUSTOMER role registration already gave them.
+      given()
+          .cookie("session", admin.sessionCookie())
+          .header("X-CSRF-Token", admin.csrfToken())
+          .post("/api/users/" + targetId + "/roles/VENDOR")
+          .then()
+          .statusCode(200);
+
+      org.junit.jupiter.api.Assertions.assertEquals(
+          java.util.Set.of(User.Role.CUSTOMER, User.Role.VENDOR),
+          TestAuthHelper.getUserRoles(target.email()));
+
+      // Revoking just one role must not disturb the other.
+      given()
+          .cookie("session", admin.sessionCookie())
+          .header("X-CSRF-Token", admin.csrfToken())
+          .delete("/api/users/" + targetId + "/roles/CUSTOMER")
+          .then()
+          .statusCode(200);
+
+      org.junit.jupiter.api.Assertions.assertEquals(
+          java.util.Set.of(User.Role.VENDOR), TestAuthHelper.getUserRoles(target.email()));
+    }
+
+    @Test
+    void revokeRole_asAdmin_success() {
+      AuthenticatedUser admin = TestAuthHelper.registerAndLogin();
+      TestAuthHelper.addUserRole(admin.email(), User.Role.ADMIN);
+
+      AuthenticatedUser target = TestAuthHelper.registerAndLogin();
+      long targetId = idOf(target);
+      TestAuthHelper.addUserRole(target.email(), User.Role.VENDOR);
+
+      given()
+          .cookie("session", admin.sessionCookie())
+          .header("X-CSRF-Token", admin.csrfToken())
+          .delete("/api/users/" + targetId + "/roles/VENDOR")
+          .then()
+          .statusCode(200);
+
+      org.junit.jupiter.api.Assertions.assertFalse(
+          TestAuthHelper.getUserRoles(target.email()).contains(User.Role.VENDOR));
+    }
+
+    @Test
+    void revokeRole_nonAdmin_returns403() {
+      AuthenticatedUser nonAdmin = TestAuthHelper.registerAndLogin();
+      AuthenticatedUser target = TestAuthHelper.registerAndLogin();
+      long targetId = idOf(target);
+
+      given()
+          .cookie("session", nonAdmin.sessionCookie())
+          .header("X-CSRF-Token", nonAdmin.csrfToken())
+          .delete("/api/users/" + targetId + "/roles/CUSTOMER")
+          .then()
+          .statusCode(403);
+    }
+
+    @Test
+    void revokeRole_noSession_returns401() {
+      given().delete("/api/users/1/roles/CUSTOMER").then().statusCode(401);
+    }
+
+    @Test
+    void revokeRole_targetNotFound_returns404() {
+      AuthenticatedUser admin = TestAuthHelper.registerAndLogin();
+      TestAuthHelper.addUserRole(admin.email(), User.Role.ADMIN);
+      long adminId = idOf(admin);
+      long nonexistentId = adminId + 1_000_000L;
+
+      given()
+          .cookie("session", admin.sessionCookie())
+          .header("X-CSRF-Token", admin.csrfToken())
+          .delete("/api/users/" + nonexistentId + "/roles/CUSTOMER")
+          .then()
+          .statusCode(404);
+    }
+
+    @Test
+    void revokeRole_notHeld_isIdempotent() {
+      AuthenticatedUser admin = TestAuthHelper.registerAndLogin();
+      TestAuthHelper.addUserRole(admin.email(), User.Role.ADMIN);
+
+      AuthenticatedUser target = TestAuthHelper.registerAndLogin();
+      long targetId = idOf(target);
+
+      // Target never had VENDOR - revoking it anyway should just succeed, not error.
+      given()
+          .cookie("session", admin.sessionCookie())
+          .header("X-CSRF-Token", admin.csrfToken())
+          .delete("/api/users/" + targetId + "/roles/VENDOR")
+          .then()
+          .statusCode(200);
+    }
+
+    @Test
+    void revokeRole_ownAccount_returns400() {
+      AuthenticatedUser admin = TestAuthHelper.registerAndLogin();
+      TestAuthHelper.addUserRole(admin.email(), User.Role.ADMIN);
+      long adminId = idOf(admin);
+
+      given()
+          .cookie("session", admin.sessionCookie())
+          .header("X-CSRF-Token", admin.csrfToken())
+          .delete("/api/users/" + adminId + "/roles/ADMIN")
+          .then()
+          .statusCode(400)
+          .body("message", equalTo("You cannot revoke your own role"));
     }
   }
 
@@ -514,7 +611,7 @@ class UserControllerTest {
     @Test
     void deactivateUser_asAdmin_success_killsTargetSessionAndBlocksLogin() {
       AuthenticatedUser admin = TestAuthHelper.registerAndLogin();
-      TestAuthHelper.setUserRole(admin.email(), User.Role.ADMIN);
+      TestAuthHelper.addUserRole(admin.email(), User.Role.ADMIN);
 
       AuthenticatedUser target = TestAuthHelper.registerAndLogin();
       long targetId =
@@ -568,7 +665,7 @@ class UserControllerTest {
     @Test
     void deactivateUser_targetNotFound_returns404() {
       AuthenticatedUser admin = TestAuthHelper.registerAndLogin();
-      TestAuthHelper.setUserRole(admin.email(), User.Role.ADMIN);
+      TestAuthHelper.addUserRole(admin.email(), User.Role.ADMIN);
       long adminId =
           given()
               .cookie("session", admin.sessionCookie())
@@ -588,7 +685,7 @@ class UserControllerTest {
     @Test
     void deactivateUser_ownAccount_returns400() {
       AuthenticatedUser admin = TestAuthHelper.registerAndLogin();
-      TestAuthHelper.setUserRole(admin.email(), User.Role.ADMIN);
+      TestAuthHelper.addUserRole(admin.email(), User.Role.ADMIN);
       long adminId =
           given()
               .cookie("session", admin.sessionCookie())
@@ -608,7 +705,7 @@ class UserControllerTest {
     @Test
     void reactivateUser_asAdmin_success_targetCanLoginAgain() {
       AuthenticatedUser admin = TestAuthHelper.registerAndLogin();
-      TestAuthHelper.setUserRole(admin.email(), User.Role.ADMIN);
+      TestAuthHelper.addUserRole(admin.email(), User.Role.ADMIN);
 
       AuthenticatedUser target = TestAuthHelper.registerAndLogin();
       long targetId =
@@ -651,7 +748,7 @@ class UserControllerTest {
     @Test
     void reactivateUser_targetNotFound_returns404() {
       AuthenticatedUser admin = TestAuthHelper.registerAndLogin();
-      TestAuthHelper.setUserRole(admin.email(), User.Role.ADMIN);
+      TestAuthHelper.addUserRole(admin.email(), User.Role.ADMIN);
       long adminId =
           given()
               .cookie("session", admin.sessionCookie())
@@ -675,7 +772,7 @@ class UserControllerTest {
     @Test
     void adminRequestPasswordReset_asAdmin_success_targetCanCompleteReset() {
       AuthenticatedUser admin = TestAuthHelper.registerAndLogin();
-      TestAuthHelper.setUserRole(admin.email(), User.Role.ADMIN);
+      TestAuthHelper.addUserRole(admin.email(), User.Role.ADMIN);
 
       AuthenticatedUser target = TestAuthHelper.registerAndLogin();
       long targetId =
@@ -732,7 +829,7 @@ class UserControllerTest {
     @Test
     void adminRequestPasswordReset_targetNotFound_returns404() {
       AuthenticatedUser admin = TestAuthHelper.registerAndLogin();
-      TestAuthHelper.setUserRole(admin.email(), User.Role.ADMIN);
+      TestAuthHelper.addUserRole(admin.email(), User.Role.ADMIN);
       long adminId =
           given()
               .cookie("session", admin.sessionCookie())

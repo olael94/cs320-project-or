@@ -42,7 +42,7 @@ class OrderControllerTest {
       long orderId = TestAuthHelper.createOrderForUser(idOf(owner), 19.99);
 
       AuthenticatedUser admin = TestAuthHelper.registerAndLogin();
-      TestAuthHelper.setUserRole(admin.email(), User.Role.ADMIN);
+      TestAuthHelper.addUserRole(admin.email(), User.Role.ADMIN);
 
       given()
           .cookie("session", admin.sessionCookie())
@@ -97,7 +97,7 @@ class OrderControllerTest {
     void getOrder_guestOrder_asAdmin_returns200() {
       long orderId = TestAuthHelper.createGuestOrder(9.99);
       AuthenticatedUser admin = TestAuthHelper.registerAndLogin();
-      TestAuthHelper.setUserRole(admin.email(), User.Role.ADMIN);
+      TestAuthHelper.addUserRole(admin.email(), User.Role.ADMIN);
 
       given()
           .cookie("session", admin.sessionCookie())
@@ -119,7 +119,7 @@ class OrderControllerTest {
       long orderId = TestAuthHelper.createOrderForUser(idOf(owner), 19.99);
 
       AuthenticatedUser admin = TestAuthHelper.registerAndLogin();
-      TestAuthHelper.setUserRole(admin.email(), User.Role.ADMIN);
+      TestAuthHelper.addUserRole(admin.email(), User.Role.ADMIN);
 
       given()
           .cookie("session", admin.sessionCookie())
@@ -159,7 +159,7 @@ class OrderControllerTest {
     @Test
     void updateOrder_orderNotFound_returns404() {
       AuthenticatedUser admin = TestAuthHelper.registerAndLogin();
-      TestAuthHelper.setUserRole(admin.email(), User.Role.ADMIN);
+      TestAuthHelper.addUserRole(admin.email(), User.Role.ADMIN);
 
       given()
           .cookie("session", admin.sessionCookie())
@@ -181,7 +181,7 @@ class OrderControllerTest {
       long orderId = TestAuthHelper.createOrderForUser(idOf(owner), 19.99);
 
       AuthenticatedUser admin = TestAuthHelper.registerAndLogin();
-      TestAuthHelper.setUserRole(admin.email(), User.Role.ADMIN);
+      TestAuthHelper.addUserRole(admin.email(), User.Role.ADMIN);
 
       given()
           .cookie("session", admin.sessionCookie())
@@ -212,7 +212,7 @@ class OrderControllerTest {
     @Test
     void deleteOrder_orderNotFound_returns404() {
       AuthenticatedUser admin = TestAuthHelper.registerAndLogin();
-      TestAuthHelper.setUserRole(admin.email(), User.Role.ADMIN);
+      TestAuthHelper.addUserRole(admin.email(), User.Role.ADMIN);
 
       given()
           .cookie("session", admin.sessionCookie())
@@ -229,7 +229,7 @@ class OrderControllerTest {
     @Test
     void getAllOrders_asAdmin_returns200() {
       AuthenticatedUser admin = TestAuthHelper.registerAndLogin();
-      TestAuthHelper.setUserRole(admin.email(), User.Role.ADMIN);
+      TestAuthHelper.addUserRole(admin.email(), User.Role.ADMIN);
 
       given().cookie("session", admin.sessionCookie()).get("/api/orders").then().statusCode(200);
     }

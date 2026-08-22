@@ -79,7 +79,7 @@ public class UserController {
     user.setUsername(registerDto.getUsername());
     user.setEmail(registerDto.getEmail());
     user.setPassword(registerDto.getPassword()); // hashed internally in setPassword()
-    user.setRole(User.Role.CUSTOMER);
+    user.addRole(User.Role.CUSTOMER);
     user.persist();
 
     logger.info("Created user: {}", user.getUsername());
@@ -243,15 +243,14 @@ public class UserController {
     return Response.ok(new UserDto(session.user)).build();
   }
 
-  // Change user's role (Admin Only)
-  @PUT
-  @Path("{id}/role")
-  @Consumes(MediaType.APPLICATION_JSON)
+  // Grant a role to a user (admin only)
+  @POST
+  @Path("{id}/roles/{role}")
   @Transactional
-  public Response updateUserRole(
+  public Response grantRole(
       @PathParam("id") Long id,
-      @CookieParam("session") Cookie sessionCookie,
-      UpdateRoleDto updateRoleDto) {
+      @PathParam("role") User.Role role,
+      @CookieParam("session") Cookie sessionCookie) {
     Session session = SessionAuth.requireValidSession(sessionCookie);
     if (session == null) {
       return Response.status(Response.Status.UNAUTHORIZED).build();
@@ -261,9 +260,42 @@ public class UserController {
       return forbidden;
     }
 
-    if (updateRoleDto.getRole() == null) {
+    User targetUser = User.findById(id);
+    if (targetUser == null) {
+      return Response.status(Response.Status.NOT_FOUND)
+          .entity(new MessageDto("User not found"))
+          .build();
+    }
+
+    targetUser.addRole(role);
+    targetUser.persist();
+
+    logger.info("Granted role {} to user: {}", role, targetUser.getUsername());
+    return Response.ok(new MessageDto("Granted " + role + " to " + targetUser.getUsername()))
+        .build();
+  }
+
+  // Revoke a role from a user (admin only)
+  @DELETE
+  @Path("{id}/roles/{role}")
+  @Transactional
+  public Response revokeRole(
+      @PathParam("id") Long id,
+      @PathParam("role") User.Role role,
+      @CookieParam("session") Cookie sessionCookie) {
+    Session session = SessionAuth.requireValidSession(sessionCookie);
+    if (session == null) {
+      return Response.status(Response.Status.UNAUTHORIZED).build();
+    }
+    Response forbidden = SessionAuth.requireRole(session, User.Role.ADMIN);
+    if (forbidden != null) {
+      return forbidden;
+    }
+
+    // Prevent an admin from revoking their own role
+    if (id.equals(session.user.id)) {
       return Response.status(Response.Status.BAD_REQUEST)
-          .entity(new MessageDto("Role is required"))
+          .entity(new MessageDto("You cannot revoke your own role"))
           .build();
     }
 
@@ -274,16 +306,12 @@ public class UserController {
           .build();
     }
 
-    targetUser.setRole(updateRoleDto.getRole());
+    // Remove the role from the user
+    targetUser.removeRole(role);
     targetUser.persist();
 
-    logger.info("Updated role for user: {}", targetUser.getUsername());
-    return Response.ok(
-            new MessageDto(
-                "Role updated to "
-                    + targetUser.getRole()
-                    + " for user "
-                    + targetUser.getUsername()))
+    logger.info("Revoked role {} from user: {}", role, targetUser.getUsername());
+    return Response.ok(new MessageDto("Revoked " + role + " from " + targetUser.getUsername()))
         .build();
   }
 
