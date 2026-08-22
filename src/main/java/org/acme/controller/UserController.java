@@ -243,6 +243,78 @@ public class UserController {
     return Response.ok(new UserDto(session.user)).build();
   }
 
+  // Grant a role to a user (admin only)
+  @POST
+  @Path("{id}/roles/{role}")
+  @Transactional
+  public Response grantRole(
+      @PathParam("id") Long id,
+      @PathParam("role") User.Role role,
+      @CookieParam("session") Cookie sessionCookie) {
+    Session session = SessionAuth.requireValidSession(sessionCookie);
+    if (session == null) {
+      return Response.status(Response.Status.UNAUTHORIZED).build();
+    }
+    Response forbidden = SessionAuth.requireRole(session, User.Role.ADMIN);
+    if (forbidden != null) {
+      return forbidden;
+    }
+
+    User targetUser = User.findById(id);
+    if (targetUser == null) {
+      return Response.status(Response.Status.NOT_FOUND)
+          .entity(new MessageDto("User not found"))
+          .build();
+    }
+
+    targetUser.addRole(role);
+    targetUser.persist();
+
+    logger.info("Granted role {} to user: {}", role, targetUser.getUsername());
+    return Response.ok(new MessageDto("Granted " + role + " to " + targetUser.getUsername()))
+        .build();
+  }
+
+  // Revoke a role from a user (admin only)
+  @DELETE
+  @Path("{id}/roles/{role}")
+  @Transactional
+  public Response revokeRole(
+      @PathParam("id") Long id,
+      @PathParam("role") User.Role role,
+      @CookieParam("session") Cookie sessionCookie) {
+    Session session = SessionAuth.requireValidSession(sessionCookie);
+    if (session == null) {
+      return Response.status(Response.Status.UNAUTHORIZED).build();
+    }
+    Response forbidden = SessionAuth.requireRole(session, User.Role.ADMIN);
+    if (forbidden != null) {
+      return forbidden;
+    }
+
+    // Prevent an admin from revoking their own role
+    if (id.equals(session.user.id)) {
+      return Response.status(Response.Status.BAD_REQUEST)
+          .entity(new MessageDto("You cannot revoke your own role"))
+          .build();
+    }
+
+    User targetUser = User.findById(id);
+    if (targetUser == null) {
+      return Response.status(Response.Status.NOT_FOUND)
+          .entity(new MessageDto("User not found"))
+          .build();
+    }
+
+    // Remove the role from the user
+    targetUser.removeRole(role);
+    targetUser.persist();
+
+    logger.info("Revoked role {} from user: {}", role, targetUser.getUsername());
+    return Response.ok(new MessageDto("Revoked " + role + " from " + targetUser.getUsername()))
+        .build();
+  }
+
   // Deactivate a user (admin only)
   @POST
   @Path("{id}/deactivate")
